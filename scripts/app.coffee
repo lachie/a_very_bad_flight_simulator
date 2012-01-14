@@ -1,5 +1,20 @@
 console.log "app cawfee"
 
+FPS = 60
+INTERVAL = 1 / FPS * 1000
+
+console.log INTERVAL
+
+WIDTH=600
+HEIGHT=400
+
+FLOOR_LEVEL = HEIGHT - 100
+CEILING_LEVEL = 10
+
+Gravity = 175
+JetpackThrust = -300
+
+
 widths = [29,32,29,31,31]
 
 spriteData =
@@ -20,34 +35,52 @@ spriteData =
 console.log "sd", spriteData.frames
 
 
-class Player
-  constructor: ->
+
+
+#Player = new Container()
+#Player.prototype.Container_initialize = Player.prototype.initialize
+
+class Player extends Container
+  constructor: (@game) ->
+    Container.prototype.initialize.apply(@)
+
     @spriteSheet = new SpriteSheet(spriteData)
     @anim = new BitmapAnimation(@spriteSheet)
     @anim.gotoAndPlay 'run'
+
     @v = 0
+    @y = 0
+
+    @addChild @anim
 
 
-  addChildren: (stage) ->
-    stage.addChild @anim
+  tick: ->
+    dt = INTERVAL / 1000
 
-
-  tick: (dt) ->
-    accel = 90
-
-    dt /= 1000.0
-    console.log "dt", dt
-
-    #a = F/m
-    #a = dx/dt
+    if @game.jumpHeld
+      accel = JetpackThrust
+    else
+      accel = Gravity
 
     @v += accel * dt
-    # @anim.y = @anim.y * dt + 0.5 * accel * (dt^2)
 
-    console.log @v, dt, "y", @anim.y
+    @y += @v * dt
 
-    @anim.y += Math.round(@v * dt)
-    # @anim.x += 1
+    if @y > FLOOR_LEVEL
+      @y = FLOOR_LEVEL
+      @bumpedFloor()
+      @v = 0
+
+    if @y < CEILING_LEVEL
+      @y = CEILING_LEVEL
+      @bumpedCeiling()
+      @v = 0
+
+
+
+  bumpedCeiling: ->
+
+  bumpedFloor: ->
 
 
 KEYCODE_SPACE = 32
@@ -70,47 +103,44 @@ class Game
 
     @stage.addChild(scoreField)
 
+    @player = new Player(@)
 
-    @player = new Player
+    @stage.addChild @player
 
-    @player.addChildren @stage
+    @jumpHeld = false
 
-
-    document.onkeydown = @handleKeyDown
-    document.onkeyup = @handleKeyUp
-
+    $(document).keydown @handleKeyDown
+    $(document).keyup @handleKeyUp
 
 
   handleKeyDown: (e) =>
-    e ||= window.event
+    e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
         @jumpHeld = true
 
   handleKeyUp: (e) =>
-    e ||= window.event
+    e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
         @jumpHeld = false
 
 
   tick: (dt) ->
-    console.log "jumping", @jumpHeld
-    @player.tick(dt)
+    # @player.tick(dt)
     @stage.update()
 
 
 $ ->
-  console.log "app cawfee"
-  canvas = document.getElementById("testCanvas")
-  console.log "c", canvas
-  stage = new Stage(canvas)
+  canvas = $('#testCanvas')
+  canvas.attr('width', WIDTH)
+  canvas.attr('height', HEIGHT)
+
+  stage = new Stage(canvas[0])
 
 
   game = new Game(stage)
 
 
-
-
-  Ticker.setFPS 10
+  Ticker.setInterval INTERVAL
   Ticker.addListener game
