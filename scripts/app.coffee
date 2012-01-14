@@ -22,7 +22,7 @@ spriteData =
   frames: {width: 30, height: 16, count: 10}
   animations:
     run:
-      frames: [6,6,6,7,7,7,8,8,8]
+      frames: [6,6,6,7,7,7,7,7,8,8,8]
       next: true
 
 #spriteData.frames = []
@@ -48,19 +48,58 @@ class Player extends Container
     @anim = new BitmapAnimation(@spriteSheet)
     @anim.gotoAndPlay 'run'
 
+    @flame = new Shape()
+    @drawFlame()
+
     @v = 0
     @y = 0
+    @scaleX = 2
+    @scaleY = 2
+
 
     @addChild @anim
+    @addChild @flame
+
+
+  drawFlame: ->
+    o = @flame
+
+    o.scaleX = 2
+    o.scaleY = 2
+    o.rotation = 180
+
+    o.x = 7
+    o.y = 12
+
+    o.visible = false
+
+    g = o.graphics
+    g.clear()
+    g.beginFill("#FF0000")
+
+    g.moveTo(2, 0);   # ship
+    g.lineTo(4, -3);  # rpoint
+    g.lineTo(2, -2);  # rnotch
+    g.lineTo(0, -5);  # tip
+    g.lineTo(-2, -2); # lnotch
+    g.lineTo(-4, -3); # lpoint
+    g.lineTo(-2, -0); # ship
+
+
+  fire: (event) ->
+    @state = event
 
 
   tick: ->
     dt = INTERVAL / 1000
 
-    if @game.jumpHeld
-      accel = JetpackThrust
-    else
-      accel = Gravity
+    switch @state
+      when 'jump'
+        accel = JetpackThrust
+        @flame.visible = true
+      else
+        accel = Gravity
+        @flame.visible = false
 
     @v += accel * dt
 
@@ -187,17 +226,25 @@ class Game
     @stats = new Stats @stage
 
 
+  fire: (event) ->
+    @player.fire(event)
+
+
   handleKeyDown: (e) =>
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        @jumpHeld = true
+        unless @jumpHeld
+          @fire('jump')
+          @jumpHeld = true
 
   handleKeyUp: (e) =>
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        @jumpHeld = false
+        if @jumpHeld
+          @fire('unjump')
+          @jumpHeld = false
 
 
   tick: ->
