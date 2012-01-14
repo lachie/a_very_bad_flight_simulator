@@ -11,8 +11,8 @@ HEIGHT=400
 FLOOR_LEVEL = HEIGHT - 100
 CEILING_LEVEL = 10
 
-Gravity = 175
-JetpackThrust = -350
+Gravity = 275
+JetpackThrust = -800
 
 
 widths = [29,32,29,31,31]
@@ -132,6 +132,14 @@ class Player extends Container
 
 
 
+class Collider
+  constructor: ->
+
+  collide: (player, obstacles) ->
+    console.log "collider p ", player, "obst", obstacles
+
+
+
 class Stats
   constructor: (stage) ->
 
@@ -151,6 +159,8 @@ class Stats
     @fps.text = Ticker.getMeasuredFPS().toString().substring(0,2)
 
 
+
+
 class Sector extends Container
   constructor: (@stage) ->
     Container.prototype.initialize.apply(@)
@@ -158,6 +168,7 @@ class Sector extends Container
     @sector_count = 0
     @base_prob = 0.003
     @stage.addChild @
+
 
   reset: ->
     console.log "resetting"
@@ -170,6 +181,7 @@ class Sector extends Container
       @wait -= 1
     else
       @generate()
+
     for i in [0...@getNumChildren()]
       console.log "child #{i}"
       child = @getChildAt(i)
@@ -192,6 +204,9 @@ class Sector extends Container
       .drawRect(600, 350 - height, width, height)
     @.addChild(bg)
 
+    @obstacles = @children
+
+
   prob: ->
     @base_prob + @sector_count * 0.01
 
@@ -210,7 +225,7 @@ KEYCODE_D = 68
 
 class Game
   constructor: (@stage) ->
-
+    @collider = new Collider
 
     @player = new Player(@)
 
@@ -220,7 +235,6 @@ class Game
 
     $(document).keydown @handleKeyDown
     $(document).keyup @handleKeyUp
-
 
     @sector = new Sector @stage
 
@@ -239,6 +253,7 @@ class Game
           @fire('jump')
           @jumpHeld = true
 
+
   handleKeyUp: (e) =>
     e.stopPropagation()
     switch e.keyCode
@@ -249,6 +264,8 @@ class Game
 
 
   tick: ->
+    @collider.collide(@player, @sector.obstacles)
+
     @stage.update()
 
     @stats.sectors.text = "Sector " + @sector.sector_count.toString()
