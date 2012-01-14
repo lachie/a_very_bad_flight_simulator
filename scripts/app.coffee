@@ -188,42 +188,44 @@ InitialLevelSpeed = 2.5
 class Sector extends Container
   constructor: (@level) ->
     Container.prototype.initialize.apply(@)
-
-    @max_objects = 3 + @level
-    @length = 1000 + @level * 200
-    @generate()
-    @speed = InitialLevelSpeed + @level * 0.5
+    @threshold = 0.004
+    @speed = InitialLevelSpeed
     @colliders = []
 
   tick: ->
+    @remove_children()
+    @generate()
     @x -= @speed
 
     #x = @x
     #@obstaclesInPlay = _.filter @obstaclesInPlay, ( (obstacle) -> x + obstacle.x > 0 )
     #@colliders.push @obstaclesInPlay[0] if @obstaclesInPlay.length
 
-    @colliders = @children
-
-
+    @colliders = []
+    @colliders.push @getChildAt(0) if @getNumChildren() > 0
 
   generate: ->
-    for i in [0...@max_objects]
-      @obstacle i
+    if Math.random() < @threshold
+      @obstacle()
 
     #@obstaclesInPlay = _.sortBy @children, (child) -> child.x
 
-  obstacle: (n) ->
+  obstacle: ->
     image = Math.floor(Math.random() * 5)
 
     [width,height] = building_dimensions[image]
 
-    x = WIDTH  + (n * (@length / @max_objects))
+    x = -@x + WIDTH
     y = HEIGHT - height
 
     bitmap = new Bitmap("images/buildings/00#{image}.jpg")
     bitmap.x = x
     bitmap.y = y
     @addChild bitmap
+
+  remove_children: ->
+    for child in @children
+      @removeChild child if child.x < 0
 
 
 
@@ -297,12 +299,6 @@ class Game
     @stats.tick()
 
     # @sector.tick()
-
-    if @sector.x < -(@sector.length + WIDTH)
-      @stage.removeChild @sector
-      @level += 1
-      @sector = new Sector @level
-      @stage.addChildAt @sector, 1
 
   check_sky: ->
     @sky1.x -= 0.15
