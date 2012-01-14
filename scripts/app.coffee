@@ -14,6 +14,7 @@ CEILING_LEVEL = 10
 Gravity = 475
 JetpackThrust = -800
 
+SKY_WIDTH = 900
 
 # the player
 widths = [29,32,29,31,31]
@@ -252,9 +253,12 @@ class Game
     $(document).keydown @handleKeyDown
     $(document).keyup @handleKeyUp
 
+    @sky1 = new Bitmap("images/sky.jpg")
+    @sky2 = new Bitmap("images/sky.jpg")
+    stage.addChild @sky1
+    stage.addChild @sky2
+    @sky2.x += SKY_WIDTH
 
-    @sky = new Bitmap("images/sky.jpg")
-    @stage.addChild @sky
     @sector = new Sector @level
     @stage.addChild @sector
     @stage.addChild @player
@@ -284,8 +288,8 @@ class Game
 
 
   tick: ->
-    @sky.x -= 0.15
-    @collider.collide(@player, @sector.colliders)
+    @check_sky()
+    @collider.collide(@player, @sector.obstacles)
 
     @stage.update()
 
@@ -300,6 +304,11 @@ class Game
       @sector = new Sector @level
       @stage.addChildAt @sector, 1
 
+  check_sky: ->
+    @sky1.x -= 2.915
+    @sky2.x -= 2.915
+    @sky1.x += SKY_WIDTH * 2 if @sky1.x < -SKY_WIDTH
+    @sky2.x += SKY_WIDTH * 2 if @sky2.x < -SKY_WIDTH
 
 $ ->
   canvas = $('#testCanvas')
