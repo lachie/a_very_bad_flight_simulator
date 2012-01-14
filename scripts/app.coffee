@@ -30,6 +30,20 @@ class Player
     stage.addChild @anim
 
 
+
+class Stats
+  constructor: (stage) ->
+
+    @stats = new Text("Hello again", "bold 12px Arial", "#FFAA00")
+    @stats.x = 10
+    @stats.y = 20
+    @stats.text = ""
+
+    stage.addChild(@stats)
+
+  update: ->
+    @stats.text = Ticker.getMeasuredFPS().toString().substring(0,4)
+
 KEYCODE_SPACE = 32
 KEYCODE_UP = 38
 KEYCODE_LEFT = 37
@@ -55,6 +69,8 @@ class Game
 
     @player.addChildren @stage
 
+    @stats = new Stats @stage
+
 
     document.onkeydown = @handleKeyDown
     document.onkeyup = @handleKeyUp
@@ -77,6 +93,7 @@ class Game
   tick: ->
     console.log "jumping", @jumpHeld
     @stage.update()
+    @stats.update()
 
 
 $ ->
@@ -91,5 +108,5 @@ $ ->
 
 
 
-  Ticker.setFPS 10
+  Ticker.setFPS 60
   Ticker.addListener game

@@ -1,5 +1,5 @@
 (function() {
-  var Game, KEYCODE_A, KEYCODE_D, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Player, spriteData, widths;
+  var Game, KEYCODE_A, KEYCODE_D, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Player, Stats, spriteData, widths;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   console.log("app cawfee");
   widths = [29, 32, 29, 31, 31];
@@ -29,6 +29,19 @@
     };
     return Player;
   })();
+  Stats = (function() {
+    function Stats(stage) {
+      this.stats = new Text("Hello again", "bold 12px Arial", "#FFAA00");
+      this.stats.x = 10;
+      this.stats.y = 20;
+      this.stats.text = "";
+      stage.addChild(this.stats);
+    }
+    Stats.prototype.update = function() {
+      return this.stats.text = Ticker.getMeasuredFPS().toString().substring(0, 4);
+    };
+    return Stats;
+  })();
   KEYCODE_SPACE = 32;
   KEYCODE_UP = 38;
   KEYCODE_LEFT = 37;
@@ -49,6 +62,7 @@
       this.stage.addChild(scoreField);
       this.player = new Player;
       this.player.addChildren(this.stage);
+      this.stats = new Stats(this.stage);
       document.onkeydown = this.handleKeyDown;
       document.onkeyup = this.handleKeyUp;
     }
@@ -68,7 +82,8 @@
     };
     Game.prototype.tick = function() {
       console.log("jumping", this.jumpHeld);
-      return this.stage.update();
+      this.stage.update();
+      return this.stats.update();
     };
     return Game;
   })();
@@ -79,7 +94,7 @@
     console.log("c", canvas);
     stage = new Stage(canvas);
     game = new Game(stage);
-    Ticker.setFPS(10);
+    Ticker.setFPS(60);
     return Ticker.addListener(game);
   });
 }).call(this);
