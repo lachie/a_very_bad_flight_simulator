@@ -41,42 +41,67 @@ class Stats
 
     stage.addChild(@fps)
 
+    @sectors = new Text("Hello again", "bold 12px Arial", "#FF0055")
+    @sectors.x = 100
+    @sectors.y = 20
+    @sectors.text = "Sectors"
+
+    stage.addChild(@sectors)
+
   update: ->
     @fps.text = Ticker.getMeasuredFPS().toString().substring(0,4)
 
 class Obstacle
-  constructor: (stage) ->
+  constructor: (stage, @speed) ->
     # create a shape to draw the background into:
     @bg = new Shape()
-    @height ||= Math.random() * 50 + 20
+    @height ||= Math.random() * 150 + 20
     @width ||= Math.random() * 50 + 20
 
-    # draw the "shelf" at the bottom of the graph:
     # note how the drawing instructions can be chained together.
-    @bg.graphics.beginStroke("#444").beginFill("#DDAA33")
+    @bg.graphics.beginStroke("#444").beginFill(Graphics.getHSL(Math.random()*360, 100, 50))
       .drawRect(600, 350 - @height, @width, @height)
     stage.addChild(@bg)
 
   update: ->
-    @bg.x -= 0.5
+    @bg.x -= @speed
 
 
 class Sector
   constructor: (@stage) ->
     @objects = []
+    @max_objects = 10
+    @sector_count = 0
+    @base_prob = 0.003
 
   reset: ->
     @objects = []
+    @stage.clear()
+    @sector_count += 1
 
   update: ->
-    @generate()
+    @reset() if @objects.length >= @max_objects
+    if @wait > 0
+      @wait -= 1
+    else
+      @generate()
     for object,i in @objects
       object.update()
 
   generate: ->
-    if Math.random() < 0.006
+    if Math.random() < @prob() && @objects.length < @max_objects
       console.log "Sector generated object"
-      @objects.push new Obstacle(@stage)
+      obstacle = new Obstacle @stage, @speed()
+      @objects.push obstacle
+      @wait = obstacle.width + 50
+      return
+    @wait = 0
+
+  prob: ->
+    @base_prob + @sector_count * 0.01
+
+  speed: ->
+    0.5 + @sector_count * 0.5
 
 KEYCODE_SPACE = 32
 KEYCODE_UP = 38
@@ -90,15 +115,6 @@ KEYCODE_D = 68
 class Game
   constructor: (@stage) ->
 
-    scoreField = new Text("Hello again", "bold 12px Arial", "#FF0000")
-    scoreField.x = 300
-    scoreField.y = 300
-
-    scoreField.text = "Hello cruel World"
-
-    @stage.addChild(scoreField)
-
-
     @player = new Player
 
     @player.addChildren @stage
@@ -107,11 +123,8 @@ class Game
 
     @stats = new Stats @stage
 
-
     document.onkeydown = @handleKeyDown
     document.onkeyup = @handleKeyUp
-
-
 
   handleKeyDown: (e) =>
     e ||= window.event
@@ -128,6 +141,7 @@ class Game
 
   tick: ->
     @stage.update()
+    @stats.sectors.text = "Sector " + @sector.sector_count.toString()
     @stats.update()
     @sector.update()
 

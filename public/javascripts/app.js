@@ -36,6 +36,11 @@
       this.fps.y = 20;
       this.fps.text = "";
       stage.addChild(this.fps);
+      this.sectors = new Text("Hello again", "bold 12px Arial", "#FF0055");
+      this.sectors.x = 100;
+      this.sectors.y = 20;
+      this.sectors.text = "Sectors";
+      stage.addChild(this.sectors);
     }
     Stats.prototype.update = function() {
       return this.fps.text = Ticker.getMeasuredFPS().toString().substring(0, 4);
@@ -43,15 +48,16 @@
     return Stats;
   })();
   Obstacle = (function() {
-    function Obstacle(stage) {
+    function Obstacle(stage, speed) {
+      this.speed = speed;
       this.bg = new Shape();
-      this.height || (this.height = Math.random() * 50 + 20);
+      this.height || (this.height = Math.random() * 150 + 20);
       this.width || (this.width = Math.random() * 50 + 20);
-      this.bg.graphics.beginStroke("#444").beginFill("#DDAA33").drawRect(600, 350 - this.height, this.width, this.height);
+      this.bg.graphics.beginStroke("#444").beginFill(Graphics.getHSL(Math.random() * 360, 100, 50)).drawRect(600, 350 - this.height, this.width, this.height);
       stage.addChild(this.bg);
     }
     Obstacle.prototype.update = function() {
-      return this.bg.x -= 0.5;
+      return this.bg.x -= this.speed;
     };
     return Obstacle;
   })();
@@ -59,13 +65,25 @@
     function Sector(stage) {
       this.stage = stage;
       this.objects = [];
+      this.max_objects = 10;
+      this.sector_count = 0;
+      this.base_prob = 0.003;
     }
     Sector.prototype.reset = function() {
-      return this.objects = [];
+      this.objects = [];
+      this.stage.clear();
+      return this.sector_count += 1;
     };
     Sector.prototype.update = function() {
       var i, object, _len, _ref, _results;
-      this.generate();
+      if (this.objects.length >= this.max_objects) {
+        this.reset();
+      }
+      if (this.wait > 0) {
+        this.wait -= 1;
+      } else {
+        this.generate();
+      }
       _ref = this.objects;
       _results = [];
       for (i = 0, _len = _ref.length; i < _len; i++) {
@@ -75,10 +93,21 @@
       return _results;
     };
     Sector.prototype.generate = function() {
-      if (Math.random() < 0.006) {
+      var obstacle;
+      if (Math.random() < this.prob() && this.objects.length < this.max_objects) {
         console.log("Sector generated object");
-        return this.objects.push(new Obstacle(this.stage));
+        obstacle = new Obstacle(this.stage, this.speed());
+        this.objects.push(obstacle);
+        this.wait = obstacle.width + 50;
+        return;
       }
+      return this.wait = 0;
+    };
+    Sector.prototype.prob = function() {
+      return this.base_prob + this.sector_count * 0.01;
+    };
+    Sector.prototype.speed = function() {
+      return 0.5 + this.sector_count * 0.5;
     };
     return Sector;
   })();
@@ -91,15 +120,9 @@
   KEYCODE_D = 68;
   Game = (function() {
     function Game(stage) {
-      var scoreField;
       this.stage = stage;
       this.handleKeyUp = __bind(this.handleKeyUp, this);
       this.handleKeyDown = __bind(this.handleKeyDown, this);
-      scoreField = new Text("Hello again", "bold 12px Arial", "#FF0000");
-      scoreField.x = 300;
-      scoreField.y = 300;
-      scoreField.text = "Hello cruel World";
-      this.stage.addChild(scoreField);
       this.player = new Player;
       this.player.addChildren(this.stage);
       this.sector = new Sector(this.stage);
@@ -123,6 +146,7 @@
     };
     Game.prototype.tick = function() {
       this.stage.update();
+      this.stats.sectors.text = "Sector " + this.sector.sector_count.toString();
       this.stats.update();
       return this.sector.update();
     };
