@@ -84,19 +84,19 @@
       this.sectors.text = "Sectors";
       stage.addChild(this.sectors);
     }
-    Stats.prototype.update = function() {
-      return this.fps.text = Ticker.getMeasuredFPS().toString().substring(0, 4);
+    Stats.prototype.tick = function() {
+      return this.fps.text = Ticker.getMeasuredFPS().toString().substring(0, 2);
     };
     return Stats;
   })();
   Obstacle = (function() {
-    function Obstacle(stage, speed) {
+    function Obstacle(sector, speed) {
       this.speed = speed;
       this.bg = new Shape();
       this.height || (this.height = Math.random() * 150 + 20);
       this.width || (this.width = Math.random() * 50 + 20);
-      this.bg.graphics.beginStroke("#444").beginFill(Graphics.getHSL(Math.random() * 360, 100, 50)).drawRect(600, 350 - this.height, this.width, this.height);
-      stage.addChild(this.bg);
+      this.bg.graphics.beginStroke("#000").beginFill(Graphics.getHSL(Math.random() * 360, 100, 50)).drawRect(600, 350 - this.height, this.width, this.height);
+      sector.addChild(this.bg);
     }
     Obstacle.prototype.update = function() {
       return this.bg.x -= this.speed;
@@ -104,19 +104,22 @@
     return Obstacle;
   })();
   Sector = (function() {
+    __extends(Sector, Container);
     function Sector(stage) {
       this.stage = stage;
+      Container.prototype.initialize.apply(this);
       this.objects = [];
-      this.max_objects = 10;
+      this.max_objects = 3;
       this.sector_count = 0;
       this.base_prob = 0.003;
+      this.stage.addChild(this);
     }
     Sector.prototype.reset = function() {
+      this.removeAllChildren();
       this.objects = [];
-      this.stage.clear();
       return this.sector_count += 1;
     };
-    Sector.prototype.update = function() {
+    Sector.prototype.tick = function() {
       var i, object, _len, _ref, _results;
       if (this.objects.length >= this.max_objects) {
         this.reset();
@@ -137,8 +140,7 @@
     Sector.prototype.generate = function() {
       var obstacle;
       if (Math.random() < this.prob() && this.objects.length < this.max_objects) {
-        console.log("Sector generated object");
-        obstacle = new Obstacle(this.stage, this.speed());
+        obstacle = new Obstacle(this, this.speed());
         this.objects.push(obstacle);
         this.wait = obstacle.width + 50;
         return;
@@ -190,8 +192,8 @@
     Game.prototype.tick = function() {
       this.stage.update();
       this.stats.sectors.text = "Sector " + this.sector.sector_count.toString();
-      this.stats.update();
-      return this.sector.update();
+      this.stats.tick();
+      return this.sector.tick();
     };
     return Game;
   })();

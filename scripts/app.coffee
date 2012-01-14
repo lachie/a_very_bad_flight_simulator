@@ -91,63 +91,57 @@ class Stats
     @fps.x = 10
     @fps.y = 20
     @fps.text = ""
-
     stage.addChild(@fps)
 
     @sectors = new Text("Hello again", "bold 12px Arial", "#FF0055")
     @sectors.x = 100
     @sectors.y = 20
     @sectors.text = "Sectors"
+    stage.addChild @sectors
 
-    stage.addChild(@sectors)
-
-  update: ->
-    @fps.text = Ticker.getMeasuredFPS().toString().substring(0,4)
+  tick: ->
+    @fps.text = Ticker.getMeasuredFPS().toString().substring(0,2)
 
 
 class Obstacle
-  constructor: (stage, @speed) ->
+  constructor: (sector, @speed) ->
     # create a shape to draw the background into:
     @bg = new Shape()
     @height ||= Math.random() * 150 + 20
     @width ||= Math.random() * 50 + 20
 
     # note how the drawing instructions can be chained together.
-    @bg.graphics.beginStroke("#444").beginFill(Graphics.getHSL(Math.random()*360, 100, 50))
-      .drawRect(600, 350 - @height, @width, @height)
-    stage.addChild(@bg)
+    @bg.graphics.beginStroke("#000").beginFill(Graphics.getHSL(Math.random()*360, 100, 50))
+      .drawRect(, 350 - @height, @width, @height)
+    sector.addChild(@bg)
 
   update: ->
     @bg.x -= @speed
 
-
-
-class Sector
+class Sector extends Container
   constructor: (@stage) ->
-    @objects = []
-    @max_objects = 10
+    Container.prototype.initialize.apply(@)
+    @max_objects = 3
     @sector_count = 0
     @base_prob = 0.003
+    @stage.addChild @
 
   reset: ->
-    @objects = []
-    @stage.clear()
+    @removeAllChildren()
     @sector_count += 1
 
-  update: ->
-    @reset() if @objects.length >= @max_objects
+  tick: ->
+    @reset() if @getNumChildren() >= @max_objects
     if @wait > 0
       @wait -= 1
     else
       @generate()
-    for object,i in @objects
-      object.update()
+    for i in [0..@getNumChildren()]
+      @getChildAt(i).update()
 
   generate: ->
-    if Math.random() < @prob() && @objects.length < @max_objects
-      console.log "Sector generated object"
-      obstacle = new Obstacle @stage, @speed()
-      @objects.push obstacle
+    if Math.random() < @prob() && @getNumChildren() < @max_objects
+      obstacle = new Obstacle @, @speed()
       @wait = obstacle.width + 50
       return
     @wait = 0
@@ -204,8 +198,8 @@ class Game
     @stage.update()
 
     @stats.sectors.text = "Sector " + @sector.sector_count.toString()
-    @stats.update()
-    @sector.update()
+    @stats.tick()
+    @sector.tick()
 
 
 $ ->
