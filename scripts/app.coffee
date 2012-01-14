@@ -30,6 +30,15 @@ class Player
     stage.addChild @anim
 
 
+KEYCODE_SPACE = 32
+KEYCODE_UP = 38
+KEYCODE_LEFT = 37
+KEYCODE_RIGHT = 39
+KEYCODE_W = 87
+KEYCODE_A = 65
+KEYCODE_D = 68
+
+
 class Game
   constructor: (@stage) ->
 
@@ -47,51 +56,26 @@ class Game
     @player.addChildren @stage
 
 
-  document.onkeydown = @handleKeyDown
-  document.onkeyup = @handleKeyUp
-
-  var KEYCODE_SPACE = 32;		//usefull keycode
-  var KEYCODE_UP = 38;		//usefull keycode
-  var KEYCODE_LEFT = 37;		//usefull keycode
-  var KEYCODE_RIGHT = 39;		//usefull keycode
-  var KEYCODE_W = 87;			//usefull keycode
-  var KEYCODE_A = 65;			//usefull keycode
-  var KEYCODE_D = 68;			//usefull keycode
+    document.onkeydown = @handleKeyDown
+    document.onkeyup = @handleKeyUp
 
 
-  handleKeyUp: =>
+
   handleKeyDown: (e) =>
     e ||= window.event
     switch e.keyCode
       when KEYCODE_SPACE
-        shootHeld = true
-      when KEYCODE_A:
-      when KEYCODE_LEFT:	lfHeld = true; break;
-      when KEYCODE_D:
-      when KEYCODE_RIGHT: rtHeld = true; break;
-      when KEYCODE_W:
-      when KEYCODE_UP:	fwdHeld = true; break;
+        @jumpHeld = true
 
-    function handleKeyDown(e) {
-	//cross browser issues exist
-	}
-}
+  handleKeyUp: (e) =>
+    e ||= window.event
+    switch e.keyCode
+      when KEYCODE_SPACE
+        @jumpHeld = false
 
-function handleKeyUp(e) {
-	//cross browser issues exist
-	if(!e){ var e = window.event; }
-	switch(e.keyCode) {
-		case KEYCODE_SPACE:	shootHeld = false; break;
-		case KEYCODE_A:
-		case KEYCODE_LEFT:	lfHeld = false; break;
-		case KEYCODE_D:
-		case KEYCODE_RIGHT: rtHeld = false; break;
-		case KEYCODE_W:
-		case KEYCODE_UP:	fwdHeld = false; break;
-	}
-}
 
   tick: ->
+    console.log "jumping", @jumpHeld
     @stage.update()
 
 
