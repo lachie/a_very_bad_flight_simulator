@@ -157,19 +157,15 @@ class Stats
   tick: ->
     @fps.text = Ticker.getMeasuredFPS().toString().substring(0,2)
 
+class Sky extends Bitmap
+
+  constructor: () ->
+    Bitmap.prototype.initialize.apply(@)
 
 
-
-class Obstacle extends Shape
+class Obstacle extends Bitmap
   constructor: (@x, @y, @width, @height) ->
-    Shape.prototype.initialize.apply(@)
-
-    # note how the drawing instructions can be chained together.
-    @graphics
-      .beginStroke("#000")
-      .beginFill(Graphics.getHSL(Math.random()*360, Math.random() * 30 + 70, 50))
-      .drawRect(0, 0, @width, @height)
-
+    Bitmap.prototype.initialize.apply(@)
 
 class Sector extends Container
   constructor: (@level) ->
@@ -193,7 +189,11 @@ class Sector extends Container
     x = WIDTH  + (n * (@length / @max_objects))
     y = HEIGHT - 100 - height
 
-    @addChild new Obstacle(x, y, width, height)
+    image = Math.floor(Math.random() * 5)
+    bitmap = new Bitmap("images/buildings/00#{image}.jpg")
+    bitmap.x = x
+    bitmap.y = y
+    @addChild bitmap
 
     @obstacles = @children
 
@@ -224,6 +224,8 @@ class Game
     $(document).keyup @handleKeyUp
 
 
+    @sky = new Bitmap("images/sky.jpg")
+    @stage.addChild @sky
     @sector = new Sector @level
     @stage.addChild @sector
     @stage.addChild @player
@@ -253,6 +255,7 @@ class Game
 
 
   tick: ->
+    @sky.x -= 0.15
     @collider.collide(@player, @sector.obstacles)
 
     @stage.update()
