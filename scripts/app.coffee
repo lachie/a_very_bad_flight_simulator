@@ -305,8 +305,8 @@ class Game
       @stage.addChildAt @sector, 1
 
   check_sky: ->
-    @sky1.x -= 2.915
-    @sky2.x -= 2.915
+    @sky1.x -= 0.15
+    @sky2.x -= 0.15
     @sky1.x += SKY_WIDTH * 2 if @sky1.x < -SKY_WIDTH
     @sky2.x += SKY_WIDTH * 2 if @sky2.x < -SKY_WIDTH
 
