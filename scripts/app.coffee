@@ -25,9 +25,29 @@ class Player
     @spriteSheet = new SpriteSheet(spriteData)
     @anim = new BitmapAnimation(@spriteSheet)
     @anim.gotoAndPlay 'run'
+    @v = 0
+
 
   addChildren: (stage) ->
     stage.addChild @anim
+
+
+  tick: (dt) ->
+    accel = 90
+
+    dt /= 1000.0
+    console.log "dt", dt
+
+    #a = F/m
+    #a = dx/dt
+
+    @v += accel * dt
+    # @anim.y = @anim.y * dt + 0.5 * accel * (dt^2)
+
+    console.log @v, dt, "y", @anim.y
+
+    @anim.y += Math.round(@v * dt)
+    # @anim.x += 1
 
 
 KEYCODE_SPACE = 32
@@ -74,8 +94,9 @@ class Game
         @jumpHeld = false
 
 
-  tick: ->
+  tick: (dt) ->
     console.log "jumping", @jumpHeld
+    @player.tick(dt)
     @stage.update()
 
 
