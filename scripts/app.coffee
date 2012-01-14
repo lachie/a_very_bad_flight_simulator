@@ -34,15 +34,49 @@ class Player
 class Stats
   constructor: (stage) ->
 
-    @stats = new Text("Hello again", "bold 12px Arial", "#FFAA00")
-    @stats.x = 10
-    @stats.y = 20
-    @stats.text = ""
+    @fps = new Text("Hello again", "bold 12px Arial", "#00FF55")
+    @fps.x = 10
+    @fps.y = 20
+    @fps.text = ""
 
-    stage.addChild(@stats)
+    stage.addChild(@fps)
 
   update: ->
-    @stats.text = Ticker.getMeasuredFPS().toString().substring(0,4)
+    @fps.text = Ticker.getMeasuredFPS().toString().substring(0,4)
+
+class Obstacle
+  constructor: (stage) ->
+    # create a shape to draw the background into:
+    @bg = new Shape()
+    @height ||= Math.random() * 50 + 20
+    @width ||= Math.random() * 50 + 20
+
+    # draw the "shelf" at the bottom of the graph:
+    # note how the drawing instructions can be chained together.
+    @bg.graphics.beginStroke("#444").beginFill("#DDAA33")
+      .drawRect(600, 350 - @height, @width, @height)
+    stage.addChild(@bg)
+
+  update: ->
+    @bg.x -= 0.5
+
+
+class Sector
+  constructor: (@stage) ->
+    @objects = []
+
+  reset: ->
+    @objects = []
+
+  update: ->
+    @generate()
+    for object,i in @objects
+      object.update()
+
+  generate: ->
+    if Math.random() < 0.006
+      console.log "Sector generated object"
+      @objects.push new Obstacle(@stage)
 
 KEYCODE_SPACE = 32
 KEYCODE_UP = 38
@@ -69,6 +103,8 @@ class Game
 
     @player.addChildren @stage
 
+    @sector = new Sector @stage
+
     @stats = new Stats @stage
 
 
@@ -91,9 +127,9 @@ class Game
 
 
   tick: ->
-    console.log "jumping", @jumpHeld
     @stage.update()
     @stats.update()
+    @sector.update()
 
 
 $ ->
@@ -104,9 +140,6 @@ $ ->
 
 
   game = new Game(stage)
-
-
-
 
   Ticker.setFPS 60
   Ticker.addListener game

@@ -1,5 +1,5 @@
 (function() {
-  var Game, KEYCODE_A, KEYCODE_D, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Player, Stats, spriteData, widths;
+  var Game, KEYCODE_A, KEYCODE_D, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Obstacle, Player, Sector, Stats, spriteData, widths;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   console.log("app cawfee");
   widths = [29, 32, 29, 31, 31];
@@ -31,16 +31,56 @@
   })();
   Stats = (function() {
     function Stats(stage) {
-      this.stats = new Text("Hello again", "bold 12px Arial", "#FFAA00");
-      this.stats.x = 10;
-      this.stats.y = 20;
-      this.stats.text = "";
-      stage.addChild(this.stats);
+      this.fps = new Text("Hello again", "bold 12px Arial", "#00FF55");
+      this.fps.x = 10;
+      this.fps.y = 20;
+      this.fps.text = "";
+      stage.addChild(this.fps);
     }
     Stats.prototype.update = function() {
-      return this.stats.text = Ticker.getMeasuredFPS().toString().substring(0, 4);
+      return this.fps.text = Ticker.getMeasuredFPS().toString().substring(0, 4);
     };
     return Stats;
+  })();
+  Obstacle = (function() {
+    function Obstacle(stage) {
+      this.bg = new Shape();
+      this.height || (this.height = Math.random() * 50 + 20);
+      this.width || (this.width = Math.random() * 50 + 20);
+      this.bg.graphics.beginStroke("#444").beginFill("#DDAA33").drawRect(600, 350 - this.height, this.width, this.height);
+      stage.addChild(this.bg);
+    }
+    Obstacle.prototype.update = function() {
+      return this.bg.x -= 0.5;
+    };
+    return Obstacle;
+  })();
+  Sector = (function() {
+    function Sector(stage) {
+      this.stage = stage;
+      this.objects = [];
+    }
+    Sector.prototype.reset = function() {
+      return this.objects = [];
+    };
+    Sector.prototype.update = function() {
+      var i, object, _len, _ref, _results;
+      this.generate();
+      _ref = this.objects;
+      _results = [];
+      for (i = 0, _len = _ref.length; i < _len; i++) {
+        object = _ref[i];
+        _results.push(object.update());
+      }
+      return _results;
+    };
+    Sector.prototype.generate = function() {
+      if (Math.random() < 0.006) {
+        console.log("Sector generated object");
+        return this.objects.push(new Obstacle(this.stage));
+      }
+    };
+    return Sector;
   })();
   KEYCODE_SPACE = 32;
   KEYCODE_UP = 38;
@@ -62,6 +102,7 @@
       this.stage.addChild(scoreField);
       this.player = new Player;
       this.player.addChildren(this.stage);
+      this.sector = new Sector(this.stage);
       this.stats = new Stats(this.stage);
       document.onkeydown = this.handleKeyDown;
       document.onkeyup = this.handleKeyUp;
@@ -81,9 +122,9 @@
       }
     };
     Game.prototype.tick = function() {
-      console.log("jumping", this.jumpHeld);
       this.stage.update();
-      return this.stats.update();
+      this.stats.update();
+      return this.sector.update();
     };
     return Game;
   })();
