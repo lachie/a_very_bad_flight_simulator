@@ -12,7 +12,7 @@ FLOOR_LEVEL = HEIGHT - 100
 CEILING_LEVEL = 10
 
 Gravity = 175
-JetpackThrust = -300
+JetpackThrust = -350
 
 
 widths = [29,32,29,31,31]
@@ -23,6 +23,10 @@ spriteData =
   animations:
     run:
       frames: [6,6,6,7,7,7,7,7,8,8,8]
+      next: true
+
+    fly:
+      frames: [5] #6,6,7,7,7,8,8]
       next: true
 
 #spriteData.frames = []
@@ -57,8 +61,8 @@ class Player extends Container
     @scaleY = 2
 
 
-    @addChild @anim
     @addChild @flame
+    @addChild @anim
 
 
   drawFlame: ->
@@ -88,6 +92,11 @@ class Player extends Container
 
   fire: (event) ->
     @state = event
+    switch @state
+      when 'jump'
+        @anim.gotoAndPlay 'fly'
+      else
+        @anim.gotoAndPlay 'run'
 
 
   tick: ->
