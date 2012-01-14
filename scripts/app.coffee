@@ -31,11 +31,7 @@ spriteData =
   #spriteData.frames.push [offset, 0, width, 16] #, i, 0, 0]
   #offset += width
 
-
 console.log "sd", spriteData.frames
-
-
-
 
 #Player = new Container()
 #Player.prototype.Container_initialize = Player.prototype.initialize
@@ -104,51 +100,32 @@ class Stats
 
 
 class Sector extends Container
-  constructor: (@stage) ->
+  constructor: (@stage, @level) ->
     Container.prototype.initialize.apply(@)
-    @max_objects = 3
-    @sector_count = 0
-    @base_prob = 0.003
+    @max_objects = 5 + @level * 2
+    @length = 2000
     @stage.addChild @
-
-  reset: ->
-    console.log "resetting"
-    @removeAllChildren()
-    @sector_count += 1
+    @generate()
 
   tick: ->
-    @reset() if @getNumChildren() >= @max_objects
-    if @wait > 0
-      @wait -= 1
-    else
-      @generate()
-    for i in [0...@getNumChildren()]
-      console.log "child #{i}"
-      child = @getChildAt(i)
-      @getChildAt(i).x -= @speed
-      @getChildAt(i).draw(@stage.canvas.getContext('2d'))
+    @x -= @speed()
 
   generate: ->
-    if Math.random() < @prob() && @getNumChildren() < @max_objects
-      @wait = @obstacle()
-      return
-    @wait = 0
+    for i in [0...@max_objects]
+      @obstacle i
 
-  obstacle: ->
+  obstacle: (n)->
     bg = new Shape()
     height = Math.random() * 150 + 20
     width = Math.random() * 50 + 20
 
     # note how the drawing instructions can be chained together.
-    bg.graphics.beginStroke("#000").beginFill(Graphics.getHSL(Math.random()*360, 100, 50))
-      .drawRect(600, 350 - height, width, height)
+    bg.graphics.beginStroke("#000").beginFill(Graphics.getHSL(Math.random()*360, Math.random() * 30 + 70, 50))
+      .drawRect(WIDTH + (n * (@length/@max_objects)), (HEIGHT - 100) - height, width, height)
     @.addChild(bg)
 
-  prob: ->
-    @base_prob + @sector_count * 0.01
-
   speed: ->
-    0.5 + @sector_count * 0.5
+    0.5 + @level * 0.25
 
 
 KEYCODE_SPACE = 32
@@ -159,11 +136,10 @@ KEYCODE_W = 87
 KEYCODE_A = 65
 KEYCODE_D = 68
 
-
 class Game
   constructor: (@stage) ->
 
-
+    @level = 0
     @player = new Player(@)
 
     @stage.addChild @player
@@ -174,7 +150,7 @@ class Game
     $(document).keyup @handleKeyUp
 
 
-    @sector = new Sector @stage
+    @sector = new Sector @stage, @level
 
     @stats = new Stats @stage
 
@@ -195,9 +171,13 @@ class Game
   tick: ->
     @stage.update()
 
-    @stats.sectors.text = "Sector " + @sector.sector_count.toString()
+    @stats.sectors.text = "Sector " + @sector.level.toString()
     @stats.tick()
     @sector.tick()
+    if @sector.x < -@sector.length
+      @stage.removeChild @sector
+      @level += 1
+      @sector = new Sector @stage, @level
 
 
 $ ->
