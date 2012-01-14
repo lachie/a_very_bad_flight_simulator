@@ -11,12 +11,21 @@ HEIGHT=400
 FLOOR_LEVEL = HEIGHT - 100
 CEILING_LEVEL = 10
 
-Gravity = 275
+Gravity = 475
 JetpackThrust = -800
 
 
+# the player
 widths = [29,32,29,31,31]
-building_heights = [265,259,220,204,132]
+
+building_dimensions = [
+  [190,265]
+  [194,259]
+  [220,220]
+  [253,204]
+  [181,132]
+]
+
 
 spriteData =
   images: ["images/mario.png"],
@@ -36,10 +45,8 @@ spriteData =
   #spriteData.frames.push [offset, 0, width, 16] #, i, 0, 0]
   #offset += width
 
-console.log "sd", spriteData.frames
 
-#Player = new Container()
-#Player.prototype.Container_initialize = Player.prototype.initialize
+
 
 class Player extends Container
   constructor: (@game) ->
@@ -134,6 +141,7 @@ class Collider
 
   collide: (player, obstacles) ->
     for obstacle in obstacles
+      console.log "collide", obstacle
       console.log player.y, obstacle.y
       if player.y > obstacle.y
         console.log "hit"
@@ -158,8 +166,13 @@ class Stats
   tick: ->
     @fps.text = Ticker.getMeasuredFPS().toString().substring(0,2)
 
-class Sky extends Bitmap
 
+
+#######################
+#  sectors & friends  #
+#######################
+
+class Sky extends Bitmap
   constructor: () ->
     Bitmap.prototype.initialize.apply(@)
 
@@ -168,6 +181,9 @@ class Obstacle extends Bitmap
   constructor: (@x, @y, @width, @height) ->
     Bitmap.prototype.initialize.apply(@)
 
+
+InitialLevelSpeed = 2.5
+
 class Sector extends Container
   constructor: (@level) ->
     Container.prototype.initialize.apply(@)
@@ -175,32 +191,45 @@ class Sector extends Container
     @max_objects = 3 + @level
     @length = 1000 + @level * 200
     @generate()
+    @speed = InitialLevelSpeed + @level * 0.5
+    @colliders = []
 
   tick: ->
-    @x -= @speed()
+    @x -= @speed
+
+    #x = @x
+    #@obstaclesInPlay = _.filter @obstaclesInPlay, ( (obstacle) -> x + obstacle.x > 0 )
+    #@colliders.push @obstaclesInPlay[0] if @obstaclesInPlay.length
+
+    @colliders = @children
+
+
 
   generate: ->
     for i in [0...@max_objects]
       @obstacle i
 
+    #@obstaclesInPlay = _.sortBy @children, (child) -> child.x
+
   obstacle: (n) ->
     image = Math.floor(Math.random() * 5)
-    width = Math.random() * 50 + 20
+
+    [width,height] = building_dimensions[image]
 
     x = WIDTH  + (n * (@length / @max_objects))
-    y = HEIGHT - building_heights[image]
+    y = HEIGHT - height
 
     bitmap = new Bitmap("images/buildings/00#{image}.jpg")
     bitmap.x = x
     bitmap.y = y
     @addChild bitmap
 
-    @obstacles = @children
 
 
-  speed: ->
-    1.0 + @level * 0.5
 
+##################
+#  All the game  #
+##################
 
 KEYCODE_SPACE = 32
 KEYCODE_UP = 38
@@ -256,7 +285,7 @@ class Game
 
   tick: ->
     @sky.x -= 0.15
-    @collider.collide(@player, @sector.obstacles)
+    @collider.collide(@player, @sector.colliders)
 
     @stage.update()
 
@@ -269,7 +298,7 @@ class Game
       @stage.removeChild @sector
       @level += 1
       @sector = new Sector @level
-      @stage.addChild @sector
+      @stage.addChildAt @sector, 1
 
 
 $ ->
