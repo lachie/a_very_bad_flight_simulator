@@ -103,21 +103,6 @@ class Stats
     @fps.text = Ticker.getMeasuredFPS().toString().substring(0,2)
 
 
-class Obstacle
-  constructor: (sector, @speed) ->
-    # create a shape to draw the background into:
-    @bg = new Shape()
-    @height ||= Math.random() * 150 + 20
-    @width ||= Math.random() * 50 + 20
-
-    # note how the drawing instructions can be chained together.
-    @bg.graphics.beginStroke("#000").beginFill(Graphics.getHSL(Math.random()*360, 100, 50))
-      .drawRect(, 350 - @height, @width, @height)
-    sector.addChild(@bg)
-
-  update: ->
-    @bg.x -= @speed
-
 class Sector extends Container
   constructor: (@stage) ->
     Container.prototype.initialize.apply(@)
@@ -127,6 +112,7 @@ class Sector extends Container
     @stage.addChild @
 
   reset: ->
+    console.log "resetting"
     @removeAllChildren()
     @sector_count += 1
 
@@ -136,15 +122,27 @@ class Sector extends Container
       @wait -= 1
     else
       @generate()
-    for i in [0..@getNumChildren()]
-      @getChildAt(i).update()
+    for i in [0...@getNumChildren()]
+      console.log "child #{i}"
+      child = @getChildAt(i)
+      @getChildAt(i).x -= @speed
+      @getChildAt(i).draw(@stage.canvas.getContext('2d'))
 
   generate: ->
     if Math.random() < @prob() && @getNumChildren() < @max_objects
-      obstacle = new Obstacle @, @speed()
-      @wait = obstacle.width + 50
+      @wait = @obstacle()
       return
     @wait = 0
+
+  obstacle: ->
+    bg = new Shape()
+    height = Math.random() * 150 + 20
+    width = Math.random() * 50 + 20
+
+    # note how the drawing instructions can be chained together.
+    bg.graphics.beginStroke("#000").beginFill(Graphics.getHSL(Math.random()*360, 100, 50))
+      .drawRect(600, 350 - height, width, height)
+    @.addChild(bg)
 
   prob: ->
     @base_prob + @sector_count * 0.01
