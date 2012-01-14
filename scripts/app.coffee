@@ -289,7 +289,7 @@ class Game
 
   tick: ->
     @check_sky()
-    @collider.collide(@player, @sector.obstacles)
+    @collider.collide(@player, @sector.colliders)
 
     @stage.update()
 
