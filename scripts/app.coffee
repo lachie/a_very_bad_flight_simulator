@@ -102,8 +102,8 @@ class Stats
 class Sector extends Container
   constructor: (@stage, @level) ->
     Container.prototype.initialize.apply(@)
-    @max_objects = 5 + @level * 2
-    @length = 2000
+    @max_objects = 3 + @level
+    @length = 1000 + @level * 200
     @stage.addChild @
     @generate()
 
@@ -174,7 +174,7 @@ class Game
     @stats.sectors.text = "Sector " + @sector.level.toString()
     @stats.tick()
     @sector.tick()
-    if @sector.x < -@sector.length
+    if @sector.x < -(@sector.length + WIDTH)
       @stage.removeChild @sector
       @level += 1
       @sector = new Sector @stage, @level
