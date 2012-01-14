@@ -160,12 +160,23 @@ class Stats
 
 
 
+class Obstacle extends Shape
+  constructor: (@x, @y, @width, @height) ->
+    Shape.prototype.initialize.apply(@)
+
+    # note how the drawing instructions can be chained together.
+    @graphics
+      .beginStroke("#000")
+      .beginFill(Graphics.getHSL(Math.random()*360, Math.random() * 30 + 70, 50))
+      .drawRect(0, 0, @width, @height)
+
+
 class Sector extends Container
-  constructor: (@stage, @level) ->
+  constructor: (@level) ->
     Container.prototype.initialize.apply(@)
+
     @max_objects = 3 + @level
     @length = 1000 + @level * 200
-    @stage.addChild @
     @generate()
 
   tick: ->
@@ -175,22 +186,14 @@ class Sector extends Container
     for i in [0...@max_objects]
       @obstacle i
 
-  obstacle: (n)->
-    bg = new Shape()
+  obstacle: (n) ->
+    width = Math.random() * 50 + 20
+    height = Math.random() * 150 + 20
 
-    bg.width = Math.random() * 50 + 20
-    bg.height = Math.random() * 150 + 20
+    x = WIDTH  + (n * (@length / @max_objects))
+    y = HEIGHT - 100 - height
 
-    bg.x = WIDTH + (n * (@length/@max_objects))
-    bg.y = (HEIGHT - 100) - bg.height
-
-    # note how the drawing instructions can be chained together.
-    bg.graphics
-      .beginStroke("#000")
-      .beginFill(Graphics.getHSL(Math.random()*360, Math.random() * 30 + 70, 50))
-      .drawRect(0, 0, bg.width, bg.height)
-
-    @addChild(bg)
+    @addChild new Obstacle(x, y, width, height)
 
     @obstacles = @children
 
@@ -221,7 +224,8 @@ class Game
     $(document).keyup @handleKeyUp
 
 
-    @sector = new Sector @stage, @level
+    @sector = new Sector @level
+    @stage.addChild @sector
     @stage.addChild @player
     @stats = new Stats @stage
 
@@ -255,11 +259,14 @@ class Game
 
     @stats.sectors.text = "Sector " + @sector.level.toString()
     @stats.tick()
-    @sector.tick()
+
+    # @sector.tick()
+
     if @sector.x < -(@sector.length + WIDTH)
       @stage.removeChild @sector
       @level += 1
-      @sector = new Sector @stage, @level
+      @sector = new Sector @level
+      @stage.addChild @sector
 
 
 $ ->
