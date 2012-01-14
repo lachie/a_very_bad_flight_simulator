@@ -16,6 +16,7 @@ JetpackThrust = -800
 
 
 widths = [29,32,29,31,31]
+building_heights = [265,259,220,204,132]
 
 spriteData =
   images: ["images/mario.png"],
@@ -183,13 +184,12 @@ class Sector extends Container
       @obstacle i
 
   obstacle: (n) ->
+    image = Math.floor(Math.random() * 5)
     width = Math.random() * 50 + 20
-    height = Math.random() * 150 + 20
 
     x = WIDTH  + (n * (@length / @max_objects))
-    y = HEIGHT - 100 - height
+    y = HEIGHT - building_heights[image]
 
-    image = Math.floor(Math.random() * 5)
     bitmap = new Bitmap("images/buildings/00#{image}.jpg")
     bitmap.x = x
     bitmap.y = y
@@ -199,7 +199,7 @@ class Sector extends Container
 
 
   speed: ->
-    0.5 + @level * 0.25
+    1.0 + @level * 0.5
 
 
 KEYCODE_SPACE = 32
