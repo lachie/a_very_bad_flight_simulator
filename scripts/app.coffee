@@ -22,7 +22,7 @@ spriteData =
   frames: {width: 30, height: 16, count: 10}
   animations:
     run:
-      frames: [6,7,8]
+      frames: [6,6,6,7,7,7,8,8,8]
       next: true
 
 #spriteData.frames = []
@@ -83,6 +83,82 @@ class Player extends Container
   bumpedFloor: ->
 
 
+
+class Stats
+  constructor: (stage) ->
+
+    @fps = new Text("Hello again", "bold 12px Arial", "#00FF55")
+    @fps.x = 10
+    @fps.y = 20
+    @fps.text = ""
+
+    stage.addChild(@fps)
+
+    @sectors = new Text("Hello again", "bold 12px Arial", "#FF0055")
+    @sectors.x = 100
+    @sectors.y = 20
+    @sectors.text = "Sectors"
+
+    stage.addChild(@sectors)
+
+  update: ->
+    @fps.text = Ticker.getMeasuredFPS().toString().substring(0,4)
+
+
+class Obstacle
+  constructor: (stage, @speed) ->
+    # create a shape to draw the background into:
+    @bg = new Shape()
+    @height ||= Math.random() * 150 + 20
+    @width ||= Math.random() * 50 + 20
+
+    # note how the drawing instructions can be chained together.
+    @bg.graphics.beginStroke("#444").beginFill(Graphics.getHSL(Math.random()*360, 100, 50))
+      .drawRect(600, 350 - @height, @width, @height)
+    stage.addChild(@bg)
+
+  update: ->
+    @bg.x -= @speed
+
+
+
+class Sector
+  constructor: (@stage) ->
+    @objects = []
+    @max_objects = 10
+    @sector_count = 0
+    @base_prob = 0.003
+
+  reset: ->
+    @objects = []
+    @stage.clear()
+    @sector_count += 1
+
+  update: ->
+    @reset() if @objects.length >= @max_objects
+    if @wait > 0
+      @wait -= 1
+    else
+      @generate()
+    for object,i in @objects
+      object.update()
+
+  generate: ->
+    if Math.random() < @prob() && @objects.length < @max_objects
+      console.log "Sector generated object"
+      obstacle = new Obstacle @stage, @speed()
+      @objects.push obstacle
+      @wait = obstacle.width + 50
+      return
+    @wait = 0
+
+  prob: ->
+    @base_prob + @sector_count * 0.01
+
+  speed: ->
+    0.5 + @sector_count * 0.5
+
+
 KEYCODE_SPACE = 32
 KEYCODE_UP = 38
 KEYCODE_LEFT = 37
@@ -95,13 +171,6 @@ KEYCODE_D = 68
 class Game
   constructor: (@stage) ->
 
-    scoreField = new Text("Hello again", "bold 12px Arial", "#FF0000")
-    scoreField.x = 300
-    scoreField.y = 300
-
-    scoreField.text = "Hello cruel World"
-
-    @stage.addChild(scoreField)
 
     @player = new Player(@)
 
@@ -111,6 +180,11 @@ class Game
 
     $(document).keydown @handleKeyDown
     $(document).keyup @handleKeyUp
+
+
+    @sector = new Sector @stage
+
+    @stats = new Stats @stage
 
 
   handleKeyDown: (e) =>
@@ -126,9 +200,12 @@ class Game
         @jumpHeld = false
 
 
-  tick: (dt) ->
-    # @player.tick(dt)
+  tick: ->
     @stage.update()
+
+    @stats.sectors.text = "Sector " + @sector.sector_count.toString()
+    @stats.update()
+    @sector.update()
 
 
 $ ->
