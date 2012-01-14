@@ -129,11 +129,13 @@ class Player extends Container
 
 
 class Collider
-  constructor: ->
+  # constructor: ->
 
   collide: (player, obstacles) ->
     for obstacle in obstacles
-      if obstacle.hitTest player.x, player.y
+      console.log player.y, obstacle.y
+      if player.y > obstacle.y
+        console.log "hit"
 
 
 
@@ -175,13 +177,20 @@ class Sector extends Container
 
   obstacle: (n)->
     bg = new Shape()
-    height = Math.random() * 150 + 20
-    width = Math.random() * 50 + 20
+
+    bg.width = Math.random() * 50 + 20
+    bg.height = Math.random() * 150 + 20
+
+    bg.x = WIDTH + (n * (@length/@max_objects))
+    bg.y = (HEIGHT - 100) - bg.height
 
     # note how the drawing instructions can be chained together.
-    bg.graphics.beginStroke("#000").beginFill(Graphics.getHSL(Math.random()*360, Math.random() * 30 + 70, 50))
-      .drawRect(WIDTH + (n * (@length/@max_objects)), (HEIGHT - 100) - height, width, height)
-    @.addChild(bg)
+    bg.graphics
+      .beginStroke("#000")
+      .beginFill(Graphics.getHSL(Math.random()*360, Math.random() * 30 + 70, 50))
+      .drawRect(0, 0, bg.width, bg.height)
+
+    @addChild(bg)
 
     @obstacles = @children
 
