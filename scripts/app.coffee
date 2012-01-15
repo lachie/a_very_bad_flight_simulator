@@ -242,9 +242,11 @@ class Word extends Text
   constructor: (word, @x, @y) ->
     Text.prototype.initialize.apply(@, ["", "36px Arial", "#F00"])
 
+    @textBaseline = 'top'
     @text = word
     @width = @getMeasuredWidth()
     @height = @getMeasuredLineHeight()
+    @y -= @height
 
 
   draw: (ctx, ignoreCache)->
@@ -257,7 +259,7 @@ class Word extends Text
   contains: (t) ->
     {x: x, y: y} = t.localToLocal(0,0,@)
     console.log "w x", x, "y", y
-    x + t.width > 0 && y + t.height > 0 && y < @height
+    x + t.width > 0 && y + t.height > -@height && y < @height
 
 
 InitialLevelSpeed = 2.5
@@ -302,7 +304,7 @@ class Sector extends Container
   word: (obstacle) ->
     text = words[Math.floor(Math.random() * words.length)]
     x_pos = obstacle.x + (obstacle.width/2 - 25)
-    word = new Word(text, x_pos, obstacle.y - 10)
+    word = new Word(text, x_pos, obstacle.y)
     @addChild word
 
   remove_children: ->
