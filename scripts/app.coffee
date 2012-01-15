@@ -33,7 +33,11 @@ building_dimensions = [
   [267,200]
 ]
 
-words = ['FISH', 'CAT', 'HAT', 'POO', 'BUM', 'RED', 'BLUE']
+words = "FISH CAT HAT POO BUM RED BLUE
+        ENNUI DEPRESSION MORTGAGE
+        RUMPYPUMPY"
+
+words = words.split(/\s+/)
 
 spriteData =
   images: ["images/mario.png","images/mariosplat.png"],
