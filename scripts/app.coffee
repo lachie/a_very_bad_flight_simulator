@@ -1,9 +1,7 @@
-console.log "app cawfee"
 
 FPS = 60
 INTERVAL = 1 / FPS * 1000
 
-console.log INTERVAL
 
 WIDTH=600
 HEIGHT=400
@@ -70,6 +68,9 @@ class Player extends Container
     @y = 0
     @scaleX = 2
     @scaleY = 2
+
+    @width = 60
+    @height = 32
 
 
     @addChild @flame
@@ -187,7 +188,13 @@ class Obstacle extends Bitmap
     Bitmap.prototype.initialize.apply(@, [image])
 
   contains: (t) ->
-    console.log "contains", @localToLocal(0,0, t)
+    {x: x, y: y} = t.localToLocal(0,0,@)
+
+    if x + t.width > 0 && y + t.height > 0
+      true
+    else
+      false
+
 
 
 InitialLevelSpeed = 2.5
@@ -198,6 +205,8 @@ class Sector extends Container
     @threshold = 0.004
     @speed = InitialLevelSpeed
     @colliders = []
+
+    @obstacle()
 
   tick: ->
     @remove_children()
@@ -231,9 +240,7 @@ class Sector extends Container
   remove_children: ->
     return if @getNumChildren() == 0
     child = @getChildAt 0
-    console.log "children #{@getNumChildren()}"
     abs_x = @x + child.x + child.width
-    console.log "child x + stage = #{abs_x}"
     @removeChild child if abs_x < 0
 
 
