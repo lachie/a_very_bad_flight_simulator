@@ -15,9 +15,11 @@ JetpackThrust = -800
 SKY_WIDTH = 900
 SKY_SPEED = 0.2
 GRASS_WIDTH = 600
-GRASS_SPEED = 4.0
+GRASS_SPEED = 8.0
 
 BUILDING_DENSITY_FACTOR = 0.005
+
+PLAYER_X_OFFSET = 100
 
 # the player
 widths = [29,32,29,31,31]
@@ -28,6 +30,7 @@ building_dimensions = [
   [220,220]
   [253,204]
   [181,132]
+  [267,200]
 ]
 
 words = ['FISH', 'CAT', 'HAT', 'POO', 'BUM', 'RED', 'BLUE']
@@ -95,7 +98,7 @@ class Player extends Container
     @v = 0
 
     @y = 0
-    @x = 100
+    @x = PLAYER_X_OFFSET
 
     @scaleX = 2
     @scaleY = 2
@@ -207,7 +210,7 @@ class Stats
     stage.addChild(@fps)
 
     @score = new Text("", "bold 32px Arial", "#FF0055")
-    @score.x = WIDTH - 200
+    @score.x = WIDTH - 250
     @score.y = 40
     @score.text = "Score"
     stage.addChild @score
@@ -239,6 +242,9 @@ class Obstacle extends Bitmap
     {x: x, y: y} = t.localToLocal(0,0,@)
     x + t.width > 0 && y + t.height > 0
 
+  is_collidable: (p) ->
+    {x: x, y: y} = p.localToLocal(0,0,@)
+    x < @width
 
   hit: (player) ->
     player.fire('die')
@@ -273,7 +279,7 @@ class Word extends Text
 InitialLevelSpeed = 2.5
 
 class Sector extends Container
-  constructor: (@level) ->
+  constructor: (@game) ->
     Container.prototype.initialize.apply(@)
     @speed = InitialLevelSpeed
     @colliders = []
@@ -284,19 +290,25 @@ class Sector extends Container
 
   tick: ->
     @remove_children()
-    @generate()
-    @x -= @speed
+    if not @game.dead
+      @generate()
+      @x -= @speed
 
-    @colliders = []
-    @colliders.push @getChildAt(0) if @getNumChildren() > 0
-    @colliders.push @getChildAt(1) if @getNumChildren() > 1
+      @colliders = []
+      child_count = @getNumChildren()
+      for i in [0...child_count] by 2
+        child = @getChildAt i
+        if child.is_collidable(@game.player)
+          @colliders.push @getChildAt(i)
+          @colliders.push @getChildAt(i+1)
+          return
 
   generate: ->
     @obstacle() if @next_building_time <= 0
     @next_building_time -= 1
 
   obstacle: ->
-    image = Math.floor(Math.random() * 5)
+    image = Math.floor(Math.random() * building_dimensions.length)
 
     [width,height] = building_dimensions[image]
 
@@ -307,6 +319,7 @@ class Sector extends Container
     @addChild bitmap
     @next_building_time = bitmap.width + Math.random() * @next_building_jitter
     @next_building_jitter -= 2.0
+    @next_building_jitter = 30 if @next_building_jitter < 30
     @word bitmap
 
   word: (obstacle) ->
@@ -363,7 +376,6 @@ class Game
     @collider = new Collider
 
     @dead = false
-    @level = 0
     @player = new Player(@)
 
     @jumpHeld = false
@@ -423,10 +435,10 @@ class Game
       @check_grass()
       @collider.collide(@player, @sector.colliders)
 
-      @stage.update()
+      @stats.score.text = "Score: " + @player.score
+      @stats.tick()
 
-    @stats.score.text = "Score: " + @player.score
-    @stats.tick()
+      @stage.update()
 
 
   dead: ->
@@ -441,7 +453,7 @@ class Game
     @stage.addChild @sky2
     @sky2.x += SKY_WIDTH
 
-    @sector = new Sector @level
+    @sector = new Sector(@)
     @stage.addChild @sector
     @stage.addChild @player
     @stats = new Stats @stage
