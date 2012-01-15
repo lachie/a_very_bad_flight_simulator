@@ -427,6 +427,8 @@ class Game
 
 
   start_game: ->
+    @player.score = 0
+
     @sky1 = new Bitmap("images/sky.jpg")
     @sky2 = new Bitmap("images/sky.jpg")
     @stage.addChild @sky1
