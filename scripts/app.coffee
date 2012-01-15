@@ -104,6 +104,9 @@ class Player extends Container
     @addChild @anim
 
 
+  dead: ->
+    @game.fire('dead')
+
   drawFlame: ->
     o = @flame
 
@@ -130,12 +133,16 @@ class Player extends Container
 
 
   fire: (event) ->
-    @state = event
-    switch @state
-      when 'jump'
-        @anim.gotoAndPlay 'fly'
-      else
-        @anim.gotoAndPlay 'run'
+    # debounce
+    if @state != event
+      @state = event
+      switch @state
+        when 'jump'
+          @anim.gotoAndPlay 'fly'
+        when 'hit'
+          @anim.gotoAndPlay 'splat'
+        else
+          @anim.gotoAndPlay 'run'
 
 
   tick: ->
@@ -145,6 +152,10 @@ class Player extends Container
       when 'jump'
         accel = JetpackThrust
         @flame.visible = true
+      when 'hit'
+        accel = 0
+        @v = 0
+        @flame.visible = false
       else
         accel = Gravity
         @flame.visible = false
@@ -177,7 +188,7 @@ class Collider
   collide: (player, colliders) ->
     for collider in colliders
       if collider.contains player #player.x, player.y
-        console.log "hit"
+        player.fire 'hit'
 
 
 
@@ -290,6 +301,7 @@ class Game
   constructor: (@stage) ->
     @collider = new Collider
 
+    @dead = false
     @level = 0
     @player = new Player(@)
 
@@ -319,16 +331,18 @@ class Game
 
 
   fire: (event) ->
-    @player.fire(event)
+    switch event
+      when 'dead'
+        @dead = true
+      else
+        @player.fire(event)
 
 
   handleKeyDown: (e) =>
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        unless @jumpHeld
-          @fire('jump')
-          @jumpHeld = true
+        @fire('jump')
       when KEYCODE_ESC
         @paused = not @paused
         Ticker.setPaused @paused
@@ -339,23 +353,26 @@ class Game
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        if @jumpHeld
-          @fire('unjump')
-          @jumpHeld = false
+        @fire('unjump')
 
 
   tick: ->
-    @check_sky()
-    @check_grass()
-    @collider.collide(@player, @sector.colliders)
 
-    @stage.update()
+    if @dead
+      # show game over
+    else
+      @check_sky()
+      @check_grass()
+      @collider.collide(@player, @sector.colliders)
 
-    @stats.sectors.text = "Sector " + @sector.level.toString()
-    @stats.tick()
+      @stage.update()
+
+      @stats.sectors.text = "Sector " + @sector.level.toString()
+      @stats.tick()
 
     # @sector.tick()
 
+  dead: ->
 
   check_sky: ->
     @sky1.x -= SKY_SPEED
