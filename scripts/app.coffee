@@ -224,8 +224,12 @@ class Sector extends Container
     @addChild bitmap
 
   remove_children: ->
-    for child in @children
-      @removeChild child if child.x < 0
+    return if @getNumChildren() == 0
+    child = @getChildAt 0
+    console.log "children #{@getNumChildren()}"
+    abs_x = @x + child.x
+    console.log "child x + stage = #{abs_x}"
+    @removeChild child if abs_x < 0
 
 
 
