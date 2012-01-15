@@ -9,7 +9,7 @@ HEIGHT=400
 FLOOR_LEVEL = HEIGHT - 3 - 32
 CEILING_LEVEL = 10
 
-Gravity = 475
+Gravity = 275
 JetpackThrust = -800
 
 SKY_WIDTH = 900
@@ -93,7 +93,10 @@ class Player extends Container
     @drawFlame()
 
     @v = 0
+
     @y = 0
+    @x = 100
+
     @scaleX = 2
     @scaleY = 2
 
@@ -134,18 +137,17 @@ class Player extends Container
     g.lineTo(-2, -0); # ship
 
 
-  fire: (event) ->
+  fire: (event, args...) ->
     # debounce
     if @state != event
       @state = event
       switch @state
         when 'jump'
           @anim.gotoAndPlay 'fly'
-        when 'hit'
+        when 'die'
           @anim.gotoAndPlay 'splat'
         else
           @anim.gotoAndPlay 'run'
-
 
   tick: ->
     dt = INTERVAL / 1000
@@ -154,7 +156,7 @@ class Player extends Container
       when 'jump'
         accel = JetpackThrust
         @flame.visible = true
-      when 'hit'
+      when 'die'
         accel = 0
         @v = 0
         @flame.visible = false
@@ -190,8 +192,8 @@ class Collider
   collide: (player, colliders) ->
     for collider in colliders
       if collider.contains player #player.x, player.y
-        console.log "hit", collider
-        player.fire 'hit'
+        collider.hit player
+        break
 
 
 
@@ -238,6 +240,9 @@ class Obstacle extends Bitmap
     x + t.width > 0 && y + t.height > 0
 
 
+  hit: (player) ->
+    player.fire('die')
+
 class Word extends Text
   constructor: (word, @x, @y) ->
     Text.prototype.initialize.apply(@, ["", "36px Arial", "#F00"])
@@ -249,17 +254,14 @@ class Word extends Text
     @y -= @height
 
 
-  draw: (ctx, ignoreCache)->
-    ctx.fillStyle = "rgb(200,0,0)"
-    ctx.fillRect(0, 0, @width, @height)
-
-    super
-
-
   contains: (t) ->
     {x: x, y: y} = t.localToLocal(0,0,@)
     console.log "w x", x, "y", y
     x + t.width > 0 && y + t.height > -@height && y < @height
+
+
+  hit: (player) ->
+    player.score += 100
 
 
 InitialLevelSpeed = 2.5
@@ -280,7 +282,7 @@ class Sector extends Container
     @x -= @speed
 
     @colliders = []
-    # @colliders.push @getChildAt(0) if @getNumChildren() > 0
+    @colliders.push @getChildAt(0) if @getNumChildren() > 0
     @colliders.push @getChildAt(1) if @getNumChildren() > 1
 
   generate: ->
@@ -362,12 +364,12 @@ class Game
 
     @started = false
 
-  fire: (event) ->
+  fire: (event, args...) ->
     switch event
       when 'dead'
         @dead = true
       else
-        @player.fire(event)
+        @player.fire(event, args...)
 
 
   handleKeyDown: (e) =>
@@ -384,6 +386,7 @@ class Game
       when KEYCODE_ESC
         @paused = not @paused
         Ticker.setPaused @paused
+
 
   handleKeyUp: (e) =>
     e.stopPropagation()
@@ -409,7 +412,7 @@ class Game
       @stage.addChild @go
       @game_over = true
 
-    else
+    else # normal game
       @check_sky()
       @check_grass()
       @collider.collide(@player, @sector.colliders)
@@ -419,9 +422,9 @@ class Game
     @stats.score.text = "Score: " + @player.score
     @stats.tick()
 
-    # @sector.tick()
 
   dead: ->
+
 
   start_game: ->
     @sky1 = new Bitmap("images/sky.jpg")
