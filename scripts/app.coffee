@@ -64,7 +64,6 @@ height = 16
 offset = 0
 for i in [0...12]
   spriteData.frames.push [offset, 0, width, height, 0]
-  console.log count
   offset += width
   count += 1
 
@@ -73,13 +72,11 @@ height = 32
 offset = 0
 for i in [0...8]
   spriteData.frames.push [0, offset, width, height, 1]
-  console.log count
   offset += height
   count += 1
 
 
 
-console.log "splat"
 frames = for i in [0...8]
   num = i + 12
   [ num, num, num, num ]
@@ -203,12 +200,10 @@ class Player extends Container
 
   fire: (event, args...) ->
 
-    console.log @state, "->", event
     return if @state == 'die' || @state == 'dying'
 
     # debounce
     if @state != event
-      console.log @state
       @state = event
       switch @state
         when 'jump'
@@ -549,19 +544,16 @@ class Game extends GameState
 
 
   tick: ->
-    console.log @state
     switch @state
       when 'dying'
         0
 
       when 'dead'
         unless @game_over
-          console.log "game_over"
           # show game over
           @go = new Bitmap("images/game_over.jpg")
           @go.x = 130
           @go.y = 160
-          console.log @go
           @stage.addChild @go
 
           @sector.stopped = true
