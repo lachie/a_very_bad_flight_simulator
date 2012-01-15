@@ -252,10 +252,10 @@ class Sector extends Container
   remove_children: ->
     return if @getNumChildren() == 0
     child = @getChildAt 0
-    console.log "children #{@getNumChildren()}"
     abs_x = @x + child.x + child.width
-    console.log "child x + stage = #{abs_x}"
-    @removeChild child if abs_x < 0
+    if abs_x < 0
+      @removeChild child
+      @removeChildAt 0
 
 
 
