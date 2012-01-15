@@ -78,6 +78,7 @@ class Player extends Container
     @addChild @flame
     @addChild @anim
 
+    @score = 0
 
   drawFlame: ->
     o = @flame
@@ -165,11 +166,11 @@ class Stats
     @fps.text = ""
     stage.addChild(@fps)
 
-    @sectors = new Text("Hello again", "bold 12px Arial", "#FF0055")
-    @sectors.x = 100
-    @sectors.y = 20
-    @sectors.text = "Sectors"
-    stage.addChild @sectors
+    @score = new Text("", "bold 32px Arial", "#FF0055")
+    @score.x = WIDTH - 200
+    @score.y = 40
+    @score.text = "Score"
+    stage.addChild @score
 
   tick: ->
     @fps.text = Ticker.getMeasuredFPS().toString().substring(0,2)
@@ -199,7 +200,7 @@ class Obstacle extends Bitmap
 
 class Word extends Text
   constructor: (word, @x, @y, @width, @height) ->
-    Text.prototype.initialize.apply(@, ["", "36px bold Arial", "#FF0000"])
+    Text.prototype.initialize.apply(@, ["", "36px Arial", "#F00"])
     @text = word
 
   contains: (t) ->
@@ -338,7 +339,7 @@ class Game
 
     @stage.update()
 
-    @stats.sectors.text = "Sector " + @sector.level.toString()
+    @stats.score.text = "Score: " + @player.score
     @stats.tick()
 
     # @sector.tick()
