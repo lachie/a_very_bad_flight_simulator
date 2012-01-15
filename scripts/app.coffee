@@ -76,23 +76,20 @@ frames = for i in [0...6]
 spriteData.animations.splat.frames = _.flatten frames
 
 
+
+sparklesFrameData =
+  images: ["images/sparkle_21x23.png"]
+  frames: {width:21,height:23,regX:10,regY:11}
+
+
 class Player extends Container
   constructor: (@game) ->
     Container.prototype.initialize.apply(@)
 
-    @spriteSheet = new SpriteSheet(spriteData)
-    @anim = new BitmapAnimation(@spriteSheet)
-    @anim.player = @
-    @anim.gotoAndPlay 'run'
+    @sparkles = []
 
-    player = @
-
-    @anim.onAnimationEnd = (anim, anim) ->
-      if anim == 'splat'
-        console.log "DEAD!"
-        player.dead()
-
-    @flame = new Shape()
+    @makeAnim()
+    @makeSparkles()
     @drawFlame()
 
     @v = 0
@@ -112,10 +109,39 @@ class Player extends Container
 
     @score = 0
 
+    @ticks = 0
+
+
   dead: ->
     @game.fire('dead')
 
+
+  finishedDying: ->
+    @game.fire('finishedDying')
+
+
+  addScore: (score) ->
+    @score += score
+    @addSparkle()
+
+
+  makeAnim: ->
+
+    @spriteSheet = new SpriteSheet(spriteData)
+    @anim = new BitmapAnimation(@spriteSheet)
+    @anim.player = @
+    @anim.gotoAndPlay 'run'
+
+    player = @
+
+    @anim.onAnimationEnd = (anim, anim) ->
+      if anim == 'splat'
+        player.finishedDying()
+
+
   drawFlame: ->
+    @flame = new Shape()
+
     o = @flame
 
     o.scaleX = 2
@@ -140,6 +166,34 @@ class Player extends Container
     g.lineTo(-2, -0); # ship
 
 
+  makeSparkles: ->
+    @bmpAnim = new BitmapAnimation(new SpriteSheet(sparklesFrameData))
+
+
+  addSparkle: ->
+    sparkle = @bmpAnim.clone()
+
+    #sparkle.x = Math.random() * 100
+    #sparkle.y = Math.random() * 100
+
+    sparkle.gotoAndPlay Math.random() * sparkle.spriteSheet.getNumFrames() | 0
+
+    speed = .5
+
+    angle = Math.PI * 2 * Math.random()
+    v = (Math.random() - 0.5) * 30 * speed
+
+    sparkle.vX = Math.cos(angle) * v
+    sparkle.vY = Math.sin(angle) * v
+
+    sparkle.vS = (Math.random()-0.5)*0.2
+    sparkle.vA = -Math.random()*0.05-0.01
+
+    console.log "adding sparkle", sparkle, sparkle.spriteSheet.getNumFrames()
+    @sparkles.push sparkle
+    @addChild sparkle
+
+
   fire: (event, args...) ->
     # debounce
     if @state != event
@@ -148,6 +202,7 @@ class Player extends Container
         when 'jump'
           @anim.gotoAndPlay 'fly'
         when 'die'
+          @dead()
           @anim.gotoAndPlay 'splat'
         else
           @anim.gotoAndPlay 'run'
@@ -180,6 +235,29 @@ class Player extends Container
       @y = CEILING_LEVEL
       @bumpedCeiling()
       @v = 0
+
+
+    newSparkles = []
+    for sparkle in @sparkles
+      #sparkle.vY += 2
+      # sparkle.vX *= 0.98
+
+      console.log 's', sparkle.vX, sparkle.vY
+
+      sparkle.x += sparkle.vX
+      sparkle.y += sparkle.vY
+
+      #sparkle.scaleX = sparkle.scaleY = sparkle.scaleX + sparkle.vS
+      sparkle.alpha += sparkle.vA
+
+      if sparkle.alpha <= 0
+        @removeChild sparkle
+      else
+        newSparkles.push sparkle
+
+    @sparkles = newSparkles
+
+    #eif @sparkles.length > 10
 
 
 
@@ -267,12 +345,11 @@ class Word extends Text
 
   contains: (t) ->
     {x: x, y: y} = t.localToLocal(0,0,@)
-    console.log "w x", x, "y", y
     x + t.width > 0 && y + t.height > -@height && y < @height
 
 
   hit: (player) ->
-    player.score += 100
+    player.addScore(100)
     @wasHit = true
 
 
