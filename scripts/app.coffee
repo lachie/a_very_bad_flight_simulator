@@ -254,6 +254,11 @@ class Word extends Text
     @y -= @height
 
 
+  tick: ->
+    if @wasHit
+      @color = '#400'
+
+
   contains: (t) ->
     {x: x, y: y} = t.localToLocal(0,0,@)
     console.log "w x", x, "y", y
@@ -262,6 +267,7 @@ class Word extends Text
 
   hit: (player) ->
     player.score += 100
+    @wasHit = true
 
 
 InitialLevelSpeed = 2.5
