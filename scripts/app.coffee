@@ -524,6 +524,7 @@ class Game extends GameState
 
   handleKeyDown: (e) =>
     e.stopPropagation()
+    e.preventDefault()
     switch e.keyCode
       when KEYCODE_SPACE
         switch @state
@@ -538,6 +539,7 @@ class Game extends GameState
 
   handleKeyUp: (e) =>
     e.stopPropagation()
+    e.preventDefault()
     switch e.keyCode
       when KEYCODE_SPACE
         @player.fire('unjump')
