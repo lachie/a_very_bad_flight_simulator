@@ -362,7 +362,13 @@ class Game
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        @fire('jump')
+        if @dead
+          @game_over = false
+          @dead = false
+          @stage.removeAllChildren()
+          @start_game()
+        else
+          @fire('jump')
       when KEYCODE_ESC
         @paused = not @paused
         Ticker.setPaused @paused
@@ -383,11 +389,13 @@ class Game
       return
 
     if @dead
+      return if @game_over
       # show game over
-      bitmap = new Bitmap("images/game_over.jpg")
-      bitmap.x = 130
-      bitmap.y = 160
-      @stage.addChild bitmap
+      @go = new Bitmap("images/game_over.jpg")
+      @go.x = 130
+      @go.y = 160
+      @stage.addChild @go
+      @game_over = true
 
     else
       @check_sky()
