@@ -253,7 +253,7 @@ class Word extends Text
 InitialLevelSpeed = 2.5
 
 class Sector extends Container
-  constructor: (@level) ->
+  constructor: (@game) ->
     Container.prototype.initialize.apply(@)
     @speed = InitialLevelSpeed
     @colliders = []
@@ -264,12 +264,13 @@ class Sector extends Container
 
   tick: ->
     @remove_children()
-    @generate()
-    @x -= @speed
+    if not @game.dead
+      @generate()
+      @x -= @speed
 
-    @colliders = []
-    @colliders.push @getChildAt(0) if @getNumChildren() > 0
-    @colliders.push @getChildAt(1) if @getNumChildren() > 1
+      @colliders = []
+      @colliders.push @getChildAt(0) if @getNumChildren() > 0
+      @colliders.push @getChildAt(1) if @getNumChildren() > 1
 
   generate: ->
     @obstacle() if @next_building_time <= 0
@@ -287,6 +288,7 @@ class Sector extends Container
     @addChild bitmap
     @next_building_time = bitmap.width + Math.random() * @next_building_jitter
     @next_building_jitter -= 2.0
+    @next_building_jitter = 30 if @next_building_jitter < 30
     @word bitmap
 
   word: (obstacle) ->
@@ -343,7 +345,6 @@ class Game
     @collider = new Collider
 
     @dead = false
-    @level = 0
     @player = new Player(@)
 
     @jumpHeld = false
@@ -402,12 +403,11 @@ class Game
       @check_grass()
       @collider.collide(@player, @sector.colliders)
 
+      @stats.score.text = "Score: " + @player.score
+      @stats.tick()
+
       @stage.update()
 
-    @stats.score.text = "Score: " + @player.score
-    @stats.tick()
-
-    # @sector.tick()
 
   dead: ->
 
@@ -418,7 +418,7 @@ class Game
     @stage.addChild @sky2
     @sky2.x += SKY_WIDTH
 
-    @sector = new Sector @level
+    @sector = new Sector(@)
     @stage.addChild @sector
     @stage.addChild @player
     @stats = new Stats @stage
