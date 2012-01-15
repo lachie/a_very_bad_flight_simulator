@@ -15,7 +15,7 @@ JetpackThrust = -800
 SKY_WIDTH = 900
 SKY_SPEED = 0.2
 GRASS_WIDTH = 600
-GRASS_SPEED = 4.0
+GRASS_SPEED = 8.0
 
 BUILDING_DENSITY_FACTOR = 0.005
 
@@ -28,6 +28,7 @@ building_dimensions = [
   [220,220]
   [253,204]
   [181,132]
+  [267,200]
 ]
 
 words = ['FISH', 'CAT', 'HAT', 'POO', 'BUM', 'RED', 'BLUE']
@@ -277,7 +278,7 @@ class Sector extends Container
     @next_building_time -= 1
 
   obstacle: ->
-    image = Math.floor(Math.random() * 5)
+    image = Math.floor(Math.random() * building_dimensions.length)
 
     [width,height] = building_dimensions[image]
 
