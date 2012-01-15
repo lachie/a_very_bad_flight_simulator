@@ -32,6 +32,7 @@ building_dimensions = [
   [181,132]
 ]
 
+words = ['FISH', 'CAT', 'HAT', 'POO', 'BUM', 'RED', 'BLUE']
 
 spriteData =
   images: ["images/mario.png"]
@@ -58,8 +59,6 @@ spriteData =
   #offset += width
 
 
-
-
 class Player extends Container
   constructor: (@game) ->
     Container.prototype.initialize.apply(@)
@@ -75,7 +74,6 @@ class Player extends Container
     @y = 0
     @scaleX = 2
     @scaleY = 2
-
 
     @addChild @flame
     @addChild @anim
@@ -199,6 +197,14 @@ class Obstacle extends Bitmap
   contains: (t) ->
     console.log "contains", @localToLocal(0,0, t)
 
+class Word extends Text
+  constructor: (word, @x, @y, @width, @height) ->
+    Text.prototype.initialize.apply(@, ["", "36px bold Arial", "#FF0000"])
+    @text = word
+
+  contains: (t) ->
+    console.log "contains", @localToLocal(0,0, t)
+
 
 InitialLevelSpeed = 2.5
 
@@ -208,6 +214,7 @@ class Sector extends Container
     @speed = InitialLevelSpeed
     @colliders = []
     @next_building_time = 0
+    @next_building_jitter = 200
 
   tick: ->
     @remove_children()
@@ -216,6 +223,7 @@ class Sector extends Container
 
     @colliders = []
     @colliders.push @getChildAt(0) if @getNumChildren() > 0
+    @colliders.push @getChildAt(1) if @getNumChildren() > 1
 
   generate: ->
     @obstacle() if @next_building_time <= 0
@@ -231,7 +239,15 @@ class Sector extends Container
 
     bitmap = new Obstacle("images/buildings/00#{image}.jpg", x, y, width, height)
     @addChild bitmap
-    @next_building_time = bitmap.width + Math.random() * 200
+    @next_building_time = bitmap.width + Math.random() * @next_building_jitter
+    @next_building_jitter -= 2.0
+    @word bitmap
+
+  word: (obstacle) ->
+    text = words[Math.floor(Math.random() * words.length)]
+    x_pos = obstacle.x + (obstacle.width/2 - 25)
+    word = new Word(text, x_pos, obstacle.y - 10, 150, 50)
+    @addChild word
 
   remove_children: ->
     return if @getNumChildren() == 0
