@@ -319,6 +319,25 @@ KEYCODE_A = 65
 KEYCODE_D = 68
 KEYCODE_ESC = 27
 
+class Logo
+  constructor: (@stage, @game) ->
+    @logo = new Bitmap("images/logo.jpg")
+    @stage.addChild @logo
+    $(document).keyup @handleKeyUp
+
+  handleKeyUp: (e) =>
+    e.stopPropagation()
+    switch e.keyCode
+      when KEYCODE_SPACE
+        console.log 'START'
+        $(document).unbind 'keyup', @handleKeyUp
+        @stage.removeAllChildren()
+        Ticker.addListener @game
+        @game.start_game()
+
+  tick: ->
+    @stage.update()
+
 class Game
   constructor: (@stage) ->
     @collider = new Collider
@@ -329,28 +348,7 @@ class Game
 
     @jumpHeld = false
 
-    $(document).keydown @handleKeyDown
-    $(document).keyup @handleKeyUp
-
-    @sky1 = new Bitmap("images/sky.jpg")
-    @sky2 = new Bitmap("images/sky.jpg")
-    stage.addChild @sky1
-    stage.addChild @sky2
-    @sky2.x += SKY_WIDTH
-
-    @sector = new Sector @level
-    @stage.addChild @sector
-    @stage.addChild @player
-    @stats = new Stats @stage
-
-    @grass1 = new Bitmap("images/grass.png")
-    @grass2 = new Bitmap("images/grass.png")
-    stage.addChild @grass1
-    stage.addChild @grass2
-    @grass1.y = HEIGHT - 30
-    @grass2.y = HEIGHT - 30
-    @grass2.x += GRASS_WIDTH
-
+    @started = false
 
   fire: (event) ->
     switch event
@@ -369,8 +367,6 @@ class Game
         @paused = not @paused
         Ticker.setPaused @paused
 
-
-
   handleKeyUp: (e) =>
     e.stopPropagation()
     switch e.keyCode
@@ -379,6 +375,12 @@ class Game
 
 
   tick: ->
+
+    if not @started
+      $(document).keydown @handleKeyDown
+      $(document).keyup @handleKeyUp
+      @started = true
+      return
 
     if @dead
       # show game over
@@ -396,6 +398,26 @@ class Game
 
   dead: ->
 
+  start_game: ->
+    @sky1 = new Bitmap("images/sky.jpg")
+    @sky2 = new Bitmap("images/sky.jpg")
+    @stage.addChild @sky1
+    @stage.addChild @sky2
+    @sky2.x += SKY_WIDTH
+
+    @sector = new Sector @level
+    @stage.addChild @sector
+    @stage.addChild @player
+    @stats = new Stats @stage
+
+    @grass1 = new Bitmap("images/grass.png")
+    @grass2 = new Bitmap("images/grass.png")
+    @stage.addChild @grass1
+    @stage.addChild @grass2
+    @grass1.y = HEIGHT - 30
+    @grass2.y = HEIGHT - 30
+    @grass2.x += GRASS_WIDTH
+
   check_sky: ->
     @sky1.x -= SKY_SPEED
     @sky2.x -= SKY_SPEED
@@ -409,15 +431,18 @@ class Game
     @grass2.x += GRASS_WIDTH * 2 if @grass2.x < -GRASS_WIDTH
 
 $ ->
+
+  Ticker.setInterval INTERVAL
+
   canvas = $('#testCanvas')
   canvas.attr('width', WIDTH)
   canvas.attr('height', HEIGHT)
 
   stage = new Stage(canvas[0])
 
-
   game = new Game(stage)
 
+  logo = new Logo(stage, game)
 
-  Ticker.setInterval INTERVAL
-  Ticker.addListener game
+  Ticker.addListener logo
+
