@@ -13,6 +13,11 @@ Gravity = 475
 JetpackThrust = -800
 
 SKY_WIDTH = 900
+SKY_SPEED = 0.2
+GRASS_WIDTH = 600
+GRASS_SPEED = 4.0
+
+BUILDING_DENSITY_FACTOR = 0.005
 
 # the player
 widths = [29,32,29,31,31]
@@ -190,6 +195,11 @@ class Sky extends Bitmap
     Bitmap.prototype.initialize.apply(@)
 
 
+class Grass extends Bitmap
+  constructor: () ->
+    Bitmap.prototype.initialize.apply(@)
+
+
 class Obstacle extends Bitmap
   constructor: (image, @x, @y, @width, @height) ->
     Bitmap.prototype.initialize.apply(@, [image])
@@ -209,9 +219,9 @@ InitialLevelSpeed = 2.5
 class Sector extends Container
   constructor: (@level) ->
     Container.prototype.initialize.apply(@)
-    @threshold = 0.004
     @speed = InitialLevelSpeed
     @colliders = []
+    @next_building_time = 0
 
     @obstacle()
 
@@ -220,18 +230,12 @@ class Sector extends Container
     @generate()
     @x -= @speed
 
-    #x = @x
-    #@obstaclesInPlay = _.filter @obstaclesInPlay, ( (obstacle) -> x + obstacle.x > 0 )
-    #@colliders.push @obstaclesInPlay[0] if @obstaclesInPlay.length
-
     @colliders = []
     @colliders.push @getChildAt(0) if @getNumChildren() > 0
 
   generate: ->
-    if Math.random() < @threshold
-      @obstacle()
-
-    #@obstaclesInPlay = _.sortBy @children, (child) -> child.x
+    @obstacle() if @next_building_time <= 0
+    @next_building_time -= 1
 
   obstacle: ->
     image = Math.floor(Math.random() * 5)
@@ -243,6 +247,7 @@ class Sector extends Container
 
     bitmap = new Obstacle("images/buildings/00#{image}.jpg", x, y, width, height)
     @addChild bitmap
+    @next_building_time = bitmap.width + Math.random() * 200
 
   remove_children: ->
     return if @getNumChildren() == 0
@@ -273,7 +278,6 @@ class Game
     @level = 0
     @player = new Player(@)
 
-
     @jumpHeld = false
 
     $(document).keydown @handleKeyDown
@@ -289,6 +293,14 @@ class Game
     @stage.addChild @sector
     @stage.addChild @player
     @stats = new Stats @stage
+
+    @grass1 = new Bitmap("images/grass.png")
+    @grass2 = new Bitmap("images/grass.png")
+    stage.addChild @grass1
+    stage.addChild @grass2
+    @grass1.y = HEIGHT - 30
+    @grass2.y = HEIGHT - 30
+    @grass2.x += GRASS_WIDTH
 
 
   fire: (event) ->
@@ -319,6 +331,7 @@ class Game
 
   tick: ->
     @check_sky()
+    @check_grass()
     @collider.collide(@player, @sector.colliders)
 
     @stage.update()
@@ -330,10 +343,16 @@ class Game
 
 
   check_sky: ->
-    @sky1.x -= 0.15
-    @sky2.x -= 0.15
+    @sky1.x -= SKY_SPEED
+    @sky2.x -= SKY_SPEED
     @sky1.x += SKY_WIDTH * 2 if @sky1.x < -SKY_WIDTH
     @sky2.x += SKY_WIDTH * 2 if @sky2.x < -SKY_WIDTH
+
+  check_grass: ->
+    @grass1.x -= GRASS_SPEED
+    @grass2.x -= GRASS_SPEED
+    @grass1.x += GRASS_WIDTH * 2 if @grass1.x < -GRASS_WIDTH
+    @grass2.x += GRASS_WIDTH * 2 if @grass2.x < -GRASS_WIDTH
 
 $ ->
   canvas = $('#testCanvas')
