@@ -27,10 +27,7 @@ building_dimensions = [
 
 
 spriteData =
-  images: ["images/mario.png"]
-  # images: ["images/mariosplat.png"],
-  frames: {width: 30, height: 16, count: 10}
-  #frames: {width: 32, height: 32, count: 4}
+  images: ["images/mario.png","images/mariosplat.png"],
   animations:
     run:
       frames: [6,6,6,7,7,7,7,7,8,8,8]
@@ -41,16 +38,26 @@ spriteData =
       next: true
 
     splat:
-      frames: [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4]
-      image: 0
+      frames: [12,12,13,13,13,14,14,14,15,15,15,15]
 
-#spriteData.frames = []
-#offset = 0
-#for width,i in widths
-  #spriteData.frames.push [offset, 0, width, 16] #, i, 0, 0]
-  #offset += width
+count = 0
+spriteData.frames = []
 
+width = 30
+height = 16
+offset = 0
+for i in [0...12]
+  spriteData.frames.push [offset, 0, width, height, 0]
+  offset += width
+  count += 1
 
+width = 32
+height = 32
+offset = 0
+for i in [0...4]
+  spriteData.frames.push [0, offset, width, height, 1]
+  offset += height
+  count += 1
 
 
 class Player extends Container
