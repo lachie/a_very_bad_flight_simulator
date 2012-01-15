@@ -6,7 +6,7 @@ INTERVAL = 1 / FPS * 1000
 WIDTH=600
 HEIGHT=400
 
-FLOOR_LEVEL = HEIGHT - 100
+FLOOR_LEVEL = HEIGHT - 3 - 32
 CEILING_LEVEL = 10
 
 Gravity = 475
@@ -44,6 +44,7 @@ spriteData =
 
     splat:
       frames: [12,12,13,13,13,14,14,14,15,15,15,15]
+      next: false
 
 count = 0
 spriteData.frames = []
@@ -59,10 +60,16 @@ for i in [0...12]
 width = 32
 height = 32
 offset = 0
-for i in [0...4]
+for i in [0...6]
   spriteData.frames.push [0, offset, width, height, 1]
   offset += height
   count += 1
+
+
+frames = for i in [0...6]
+  num = i + 12
+  [ num, num, num, num ]
+spriteData.animations.splat.frames = _.flatten frames
 
 
 class Player extends Container
@@ -71,7 +78,15 @@ class Player extends Container
 
     @spriteSheet = new SpriteSheet(spriteData)
     @anim = new BitmapAnimation(@spriteSheet)
+    @anim.player = @
     @anim.gotoAndPlay 'run'
+
+    player = @
+
+    @anim.onAnimationEnd = (anim, anim) ->
+      if anim == 'splat'
+        console.log "DEAD!"
+        player.dead()
 
     @flame = new Shape()
     @drawFlame()
