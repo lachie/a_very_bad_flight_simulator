@@ -193,7 +193,6 @@ class Player extends Container
     sparkle.vS = (Math.random()-0.5)*0.2
     sparkle.vA = -Math.random()*0.05-0.01
 
-    console.log "adding sparkle", sparkle, sparkle.spriteSheet.getNumFrames()
     @sparkles.push sparkle
     @addChild sparkle
 
@@ -245,8 +244,6 @@ class Player extends Container
     for sparkle in @sparkles
       #sparkle.vY += 2
       # sparkle.vX *= 0.98
-
-      console.log 's', sparkle.vX, sparkle.vY
 
       sparkle.x += sparkle.vX
       sparkle.y += sparkle.vY
