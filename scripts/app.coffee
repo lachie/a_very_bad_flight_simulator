@@ -19,6 +19,8 @@ GRASS_SPEED = 8.0
 
 BUILDING_DENSITY_FACTOR = 0.005
 
+PLAYER_X_OFFSET = 100
+
 # the player
 widths = [29,32,29,31,31]
 
@@ -96,7 +98,7 @@ class Player extends Container
     @v = 0
 
     @y = 0
-    @x = 100
+    @x = PLAYER_X_OFFSET
 
     @scaleX = 2
     @scaleY = 2
@@ -208,7 +210,7 @@ class Stats
     stage.addChild(@fps)
 
     @score = new Text("", "bold 32px Arial", "#FF0055")
-    @score.x = WIDTH - 200
+    @score.x = WIDTH - 250
     @score.y = 40
     @score.text = "Score"
     stage.addChild @score
@@ -240,6 +242,9 @@ class Obstacle extends Bitmap
     {x: x, y: y} = t.localToLocal(0,0,@)
     x + t.width > 0 && y + t.height > 0
 
+  is_collidable: (p) ->
+    {x: x, y: y} = p.localToLocal(0,0,@)
+    x < @width
 
   hit: (player) ->
     player.fire('die')
@@ -284,8 +289,13 @@ class Sector extends Container
       @x -= @speed
 
       @colliders = []
-      @colliders.push @getChildAt(0) if @getNumChildren() > 0
-      @colliders.push @getChildAt(1) if @getNumChildren() > 1
+      child_count = @getNumChildren()
+      for i in [0...child_count] by 2
+        child = @getChildAt i
+        if child.is_collidable(@game.player)
+          @colliders.push @getChildAt(i)
+          @colliders.push @getChildAt(i+1)
+          return
 
   generate: ->
     @obstacle() if @next_building_time <= 0
