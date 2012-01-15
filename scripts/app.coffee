@@ -35,7 +35,8 @@ building_dimensions = [
 
 words = "FISH CAT HAT POO BUM RED BLUE
         ENNUI DEPRESSION MORTGAGE
-        RUMPYPUMPY WHISKEY"
+        RUMPYPUMPY WHISKEY
+        ROBUST BUXOM WANTON INTERCOURSE"
 
 words = words.split(/\s+/)
 
@@ -51,30 +52,35 @@ spriteData =
       next: true
 
     splat:
-      frames: [12,12,13,13,13,14,14,14,15,15,15,15]
+      frames: [12,12,13,13,13,14,14,14,15,15,15,15,16,16,16,16,17,17,17,17]
       next: false
 
 count = 0
 spriteData.frames = []
+
 
 width = 30
 height = 16
 offset = 0
 for i in [0...12]
   spriteData.frames.push [offset, 0, width, height, 0]
+  console.log count
   offset += width
   count += 1
 
 width = 32
 height = 32
 offset = 0
-for i in [0...6]
+for i in [0...8]
   spriteData.frames.push [0, offset, width, height, 1]
+  console.log count
   offset += height
   count += 1
 
 
-frames = for i in [0...6]
+
+console.log "splat"
+frames = for i in [0...8]
   num = i + 12
   [ num, num, num, num ]
 spriteData.animations.splat.frames = _.flatten frames
@@ -104,8 +110,8 @@ class Player extends Container
     @scaleX = 2
     @scaleY = 2
 
-    @width = 60
-    @height = 32
+    @width = 30
+    @height = 16
 
 
     @addChild @flame
@@ -116,12 +122,10 @@ class Player extends Container
     @ticks = 0
 
 
-  dead: ->
-    @game.fire('dead')
-
 
   finishedDying: ->
-    @game.fire('finishedDying')
+    @game.fire('dead')
+
 
 
   addScore: (score) ->
@@ -198,17 +202,32 @@ class Player extends Container
 
 
   fire: (event, args...) ->
+
+    console.log @state, "->", event
+    return if @state == 'die' || @state == 'dying'
+
     # debounce
     if @state != event
+      console.log @state
       @state = event
       switch @state
         when 'jump'
           @anim.gotoAndPlay 'fly'
         when 'die'
-          @dead()
+          @die()
           @anim.gotoAndPlay 'splat'
-        else
+        when 'unjump'
           @anim.gotoAndPlay 'run'
+
+  die: ->
+    @state = 'dying'
+    @game.fire('dying')
+    @anim.gotoAndPlay 'splat'
+
+
+  finishedDying: ->
+    @game.fire('dead')
+
 
   tick: ->
     dt = INTERVAL / 1000
@@ -217,10 +236,13 @@ class Player extends Container
       when 'jump'
         accel = JetpackThrust
         @flame.visible = true
-      when 'die'
-        accel = 0
-        @v = 0
+      when 'die', 'dying'
+        accel = Gravity / 2
+        #@v = 0
         @flame.visible = false
+
+        if @y <= 0
+          @finishedDying()
       else
         accel = Gravity
         @flame.visible = false
@@ -326,7 +348,7 @@ class Obstacle extends Bitmap
     x < @width
 
   hit: (player) ->
-    player.fire('die')
+    player.die()
 
 class Word extends Text
   constructor: (word, @x, @y) ->
@@ -354,6 +376,7 @@ class Word extends Text
     @wasHit = true
 
 
+
 InitialLevelSpeed = 2.5
 
 class Sector extends Container
@@ -367,6 +390,8 @@ class Sector extends Container
     @obstacle()
 
   tick: ->
+    return if @stopped
+
     @remove_children()
     if not @game.dead
       @generate()
@@ -400,6 +425,7 @@ class Sector extends Container
     @next_building_jitter = 30 if @next_building_jitter < 30
     @word bitmap
 
+
   word: (obstacle) ->
     text = words[Math.floor(Math.random() * words.length)]
     x_pos = obstacle.x + (obstacle.width/2 - 25)
@@ -430,55 +456,86 @@ KEYCODE_A = 65
 KEYCODE_D = 68
 KEYCODE_ESC = 27
 
-class Logo
+
+
+class GameState
+  constructor: (@stage) ->
+
+  enter: ->
+    $(document).keyup @handleKeyUp
+    $(document).keydown @handleKeyDown
+
+  exit: ->
+    $(document).unbind 'keyup', @handleKeyUp
+    $(document).unbind 'keydown', @handleKeyDown
+    @stage.removeAllChildren()
+
+  tick: ->
+    @stage.update()
+
+
+  changeState: (state) ->
+    @exit()
+    Ticker.removeListener(@)
+    state.enter()
+    Ticker.addListener(state)
+
+  handleKeyDown: =>
+    console.log "base kd"
+  handleKeyUp: =>
+    console.log "base ku"
+
+
+class Logo extends GameState
   constructor: (@stage, @game) ->
+    super
+
+
+  enter: ->
+    super
     @logo = new Bitmap("images/logo.jpg")
     @stage.addChild @logo
-    $(document).keyup @handleKeyUp
+
 
   handleKeyUp: (e) =>
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        console.log 'START'
-        $(document).unbind 'keyup', @handleKeyUp
-        @stage.removeAllChildren()
-        Ticker.addListener @game
-        @game.start_game()
+        @changeState @game
 
-  tick: ->
-    @stage.update()
 
-class Game
+
+
+
+class Game extends GameState
   constructor: (@stage) ->
     @collider = new Collider
 
-    @dead = false
-    @player = new Player(@)
+    @state = 'init'
 
-    @jumpHeld = false
 
-    @started = false
+  enter: ->
+    super
+    @start_game()
 
   fire: (event, args...) ->
     switch event
       when 'dead'
-        @dead = true
-      else
-        @player.fire(event, args...)
+        @state = 'dead'
+
+      when 'dying'
+        @state = 'dying'
 
 
   handleKeyDown: (e) =>
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        if @dead
-          @game_over = false
-          @dead = false
-          @stage.removeAllChildren()
-          @start_game()
-        else
-          @fire('jump')
+        switch @state
+          when 'running'
+            @player.fire('jump')
+          when 'dead'
+            @changeState @
       when KEYCODE_ESC
         @paused = not @paused
         Ticker.setPaused @paused
@@ -488,41 +545,44 @@ class Game
     e.stopPropagation()
     switch e.keyCode
       when KEYCODE_SPACE
-        @fire('unjump')
+        @player.fire('unjump')
 
 
   tick: ->
+    console.log @state
+    switch @state
+      when 'dying'
+        0
 
-    if not @started
-      $(document).keydown @handleKeyDown
-      $(document).keyup @handleKeyUp
-      @started = true
-      return
+      when 'dead'
+        unless @game_over
+          console.log "game_over"
+          # show game over
+          @go = new Bitmap("images/game_over.jpg")
+          @go.x = 130
+          @go.y = 160
+          console.log @go
+          @stage.addChild @go
 
-    if @dead
-      return if @game_over
-      # show game over
-      @go = new Bitmap("images/game_over.jpg")
-      @go.x = 130
-      @go.y = 160
-      @stage.addChild @go
-      @game_over = true
+          @sector.stopped = true
 
-    else # normal game
-      @check_sky()
-      @check_grass()
-      @collider.collide(@player, @sector.colliders)
+          @game_over = true
 
-      @stats.score.text = "Score: " + @player.score
-      @stats.tick()
+      else # normal game
+        @check_sky()
+        @check_grass()
+        @collider.collide(@player, @sector.colliders)
 
-      @stage.update()
+        @stats.score.text = "Score: " + @player.score
+        @stats.tick()
 
-
-  dead: ->
-
+    @stage.update()
 
   start_game: ->
+    @state = 'starting'
+    @game_over = false
+
+    @player = new Player(@)
     @player.score = 0
 
     @sky1 = new Bitmap("images/sky.jpg")
@@ -533,7 +593,9 @@ class Game
 
     @sector = new Sector(@)
     @stage.addChild @sector
+
     @stage.addChild @player
+
     @stats = new Stats @stage
 
     @grass1 = new Bitmap("images/grass.png")
@@ -543,6 +605,9 @@ class Game
     @grass1.y = HEIGHT - 40
     @grass2.y = HEIGHT - 40
     @grass2.x += GRASS_WIDTH
+
+    @state = 'running'
+
 
   check_sky: ->
     @sky1.x -= SKY_SPEED
@@ -569,6 +634,6 @@ $ ->
   game = new Game(stage)
 
   logo = new Logo(stage, game)
-
+  logo.enter()
   Ticker.addListener logo
 
