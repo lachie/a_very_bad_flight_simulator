@@ -35,7 +35,7 @@ building_dimensions = [
 
 words = "FISH CAT HAT POO BUM RED BLUE
         ENNUI DEPRESSION MORTGAGE
-        RUMPYPUMPY"
+        RUMPYPUMPY WHISKEY"
 
 words = words.split(/\s+/)
 
@@ -543,8 +543,8 @@ class Game
     @grass2 = new Bitmap("images/grass.png")
     @stage.addChild @grass1
     @stage.addChild @grass2
-    @grass1.y = HEIGHT - 30
-    @grass2.y = HEIGHT - 30
+    @grass1.y = HEIGHT - 40
+    @grass2.y = HEIGHT - 40
     @grass2.x += GRASS_WIDTH
 
   check_sky: ->
