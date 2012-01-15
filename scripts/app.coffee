@@ -207,6 +207,7 @@ class Sector extends Container
     Container.prototype.initialize.apply(@)
     @speed = InitialLevelSpeed
     @colliders = []
+    @next_building_time = 0
 
   tick: ->
     @remove_children()
@@ -217,8 +218,8 @@ class Sector extends Container
     @colliders.push @getChildAt(0) if @getNumChildren() > 0
 
   generate: ->
-    if Math.random() < BUILDING_DENSITY_FACTOR
-      @obstacle()
+    @obstacle() if @next_building_time <= 0
+    @next_building_time -= 1
 
   obstacle: ->
     image = Math.floor(Math.random() * 5)
@@ -230,6 +231,7 @@ class Sector extends Container
 
     bitmap = new Obstacle("images/buildings/00#{image}.jpg", x, y, width, height)
     @addChild bitmap
+    @next_building_time = bitmap.width + Math.random() * 200
 
   remove_children: ->
     return if @getNumChildren() == 0
