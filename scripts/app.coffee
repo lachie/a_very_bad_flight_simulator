@@ -29,8 +29,10 @@ building_dimensions = [
 
 
 spriteData =
-  images: ["images/mario.png"],
+  images: ["images/mario.png"]
+  # images: ["images/mariosplat.png"],
   frames: {width: 30, height: 16, count: 10}
+  #frames: {width: 32, height: 32, count: 4}
   animations:
     run:
       frames: [6,6,6,7,7,7,7,7,8,8,8]
@@ -39,6 +41,10 @@ spriteData =
     fly:
       frames: [5] #6,6,7,7,7,8,8]
       next: true
+
+    splat:
+      frames: [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,4,4]
+      image: 0
 
 #spriteData.frames = []
 #offset = 0
@@ -140,11 +146,9 @@ class Player extends Container
 class Collider
   # constructor: ->
 
-  collide: (player, obstacles) ->
-    for obstacle in obstacles
-      console.log "collide", obstacle
-      console.log player.y, obstacle.y
-      if player.y > obstacle.y
+  collide: (player, colliders) ->
+    for collider in colliders
+      if collider.contains player #player.x, player.y
         console.log "hit"
 
 
@@ -179,8 +183,11 @@ class Sky extends Bitmap
 
 
 class Obstacle extends Bitmap
-  constructor: (@x, @y, @width, @height) ->
-    Bitmap.prototype.initialize.apply(@)
+  constructor: (image, @x, @y, @width, @height) ->
+    Bitmap.prototype.initialize.apply(@, [image])
+
+  contains: (t) ->
+    console.log "contains", @localToLocal(0,0, t)
 
 
 InitialLevelSpeed = 2.5
@@ -220,9 +227,7 @@ class Sector extends Container
     x = WIDTH  + (n * (@length / @max_objects))
     y = HEIGHT - height
 
-    bitmap = new Bitmap("images/buildings/00#{image}.jpg")
-    bitmap.x = x
-    bitmap.y = y
+    bitmap = new Obstacle("images/buildings/00#{image}.jpg", x, y, width, height)
     @addChild bitmap
 
 
@@ -239,6 +244,7 @@ KEYCODE_RIGHT = 39
 KEYCODE_W = 87
 KEYCODE_A = 65
 KEYCODE_D = 68
+KEYCODE_ESC = 27
 
 class Game
   constructor: (@stage) ->
@@ -276,6 +282,10 @@ class Game
         unless @jumpHeld
           @fire('jump')
           @jumpHeld = true
+      when KEYCODE_ESC
+        @paused = not @paused
+        Ticker.setPaused @paused
+
 
 
   handleKeyUp: (e) =>
@@ -302,7 +312,7 @@ class Game
       @stage.removeChild @sector
       @level += 1
       @sector = new Sector @level
-      @stage.addChildAt @sector, 1
+      @stage.addChild @sector
 
   check_sky: ->
     @sky1.x -= 0.15
