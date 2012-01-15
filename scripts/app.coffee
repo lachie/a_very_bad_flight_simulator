@@ -30,6 +30,7 @@ building_dimensions = [
   [181,132]
 ]
 
+words = ['FISH', 'CAT', 'HAT', 'POO', 'BUM', 'RED', 'BLUE']
 
 spriteData =
   images: ["images/mario.png","images/mariosplat.png"],
@@ -103,6 +104,7 @@ class Player extends Container
     @addChild @flame
     @addChild @anim
 
+    @score = 0
 
   dead: ->
     @game.fire('dead')
@@ -201,11 +203,11 @@ class Stats
     @fps.text = ""
     stage.addChild(@fps)
 
-    @sectors = new Text("Hello again", "bold 12px Arial", "#FF0055")
-    @sectors.x = 100
-    @sectors.y = 20
-    @sectors.text = "Sectors"
-    stage.addChild @sectors
+    @score = new Text("", "bold 32px Arial", "#FF0055")
+    @score.x = WIDTH - 200
+    @score.y = 40
+    @score.text = "Score"
+    stage.addChild @score
 
   tick: ->
     @fps.text = Ticker.getMeasuredFPS().toString().substring(0,2)
@@ -239,6 +241,14 @@ class Obstacle extends Bitmap
       false
 
 
+class Word extends Text
+  constructor: (word, @x, @y, @width, @height) ->
+    Text.prototype.initialize.apply(@, ["", "36px Arial", "#F00"])
+    @text = word
+
+  contains: (t) ->
+    console.log "contains", @localToLocal(0,0, t)
+
 
 InitialLevelSpeed = 2.5
 
@@ -248,6 +258,7 @@ class Sector extends Container
     @speed = InitialLevelSpeed
     @colliders = []
     @next_building_time = 0
+    @next_building_jitter = 200
 
     @obstacle()
 
@@ -258,6 +269,7 @@ class Sector extends Container
 
     @colliders = []
     @colliders.push @getChildAt(0) if @getNumChildren() > 0
+    @colliders.push @getChildAt(1) if @getNumChildren() > 1
 
   generate: ->
     @obstacle() if @next_building_time <= 0
@@ -273,13 +285,23 @@ class Sector extends Container
 
     bitmap = new Obstacle("images/buildings/00#{image}.jpg", x, y, width, height)
     @addChild bitmap
-    @next_building_time = bitmap.width + Math.random() * 200
+    @next_building_time = bitmap.width + Math.random() * @next_building_jitter
+    @next_building_jitter -= 2.0
+    @word bitmap
+
+  word: (obstacle) ->
+    text = words[Math.floor(Math.random() * words.length)]
+    x_pos = obstacle.x + (obstacle.width/2 - 25)
+    word = new Word(text, x_pos, obstacle.y - 10, 150, 50)
+    @addChild word
 
   remove_children: ->
     return if @getNumChildren() == 0
     child = @getChildAt 0
     abs_x = @x + child.x + child.width
-    @removeChild child if abs_x < 0
+    if abs_x < 0
+      @removeChild child
+      @removeChildAt 0
 
 
 
@@ -367,8 +389,8 @@ class Game
 
       @stage.update()
 
-      @stats.sectors.text = "Sector " + @sector.level.toString()
-      @stats.tick()
+    @stats.score.text = "Score: " + @player.score
+    @stats.tick()
 
     # @sector.tick()
 
