@@ -190,6 +190,7 @@ class Collider
   collide: (player, colliders) ->
     for collider in colliders
       if collider.contains player #player.x, player.y
+        console.log "hit", collider
         player.fire 'hit'
 
 
@@ -234,20 +235,29 @@ class Obstacle extends Bitmap
 
   contains: (t) ->
     {x: x, y: y} = t.localToLocal(0,0,@)
-
-    if x + t.width > 0 && y + t.height > 0
-      true
-    else
-      false
+    x + t.width > 0 && y + t.height > 0
 
 
 class Word extends Text
-  constructor: (word, @x, @y, @width, @height) ->
+  constructor: (word, @x, @y) ->
     Text.prototype.initialize.apply(@, ["", "36px Arial", "#F00"])
+
     @text = word
+    @width = @getMeasuredWidth()
+    @height = @getMeasuredLineHeight()
+
+
+  draw: (ctx, ignoreCache)->
+    ctx.fillStyle = "rgb(200,0,0)"
+    ctx.fillRect(0, 0, @width, @height)
+
+    super
+
 
   contains: (t) ->
-    console.log "contains", @localToLocal(0,0, t)
+    {x: x, y: y} = t.localToLocal(0,0,@)
+    console.log "w x", x, "y", y
+    x + t.width > 0 && y + t.height > 0 && y < @height
 
 
 InitialLevelSpeed = 2.5
@@ -268,7 +278,7 @@ class Sector extends Container
     @x -= @speed
 
     @colliders = []
-    @colliders.push @getChildAt(0) if @getNumChildren() > 0
+    # @colliders.push @getChildAt(0) if @getNumChildren() > 0
     @colliders.push @getChildAt(1) if @getNumChildren() > 1
 
   generate: ->
@@ -292,7 +302,7 @@ class Sector extends Container
   word: (obstacle) ->
     text = words[Math.floor(Math.random() * words.length)]
     x_pos = obstacle.x + (obstacle.width/2 - 25)
-    word = new Word(text, x_pos, obstacle.y - 10, 150, 50)
+    word = new Word(text, x_pos, obstacle.y - 10)
     @addChild word
 
   remove_children: ->
