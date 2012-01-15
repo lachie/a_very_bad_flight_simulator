@@ -384,6 +384,11 @@ class Game
 
     if @dead
       # show game over
+      bitmap = new Bitmap("images/game_over.jpg")
+      bitmap.x = 130
+      bitmap.y = 160
+      @stage.addChild bitmap
+
     else
       @check_sky()
       @check_grass()
