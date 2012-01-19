@@ -34,9 +34,7 @@ building_dimensions = [
 ]
 
 words = "FISH CAT HAT POO BUM RED BLUE
-        ENNUI DEPRESSION MORTGAGE
-        RUMPYPUMPY WHISKEY
-        ROBUST BUXOM WANTON INTERCOURSE"
+        ENNUI DEPRESSION MORTGAGE"
 
 words = words.split(/\s+/)
 
@@ -596,8 +594,8 @@ class Game extends GameState
     @grass2 = new Bitmap("images/grass.png")
     @stage.addChild @grass1
     @stage.addChild @grass2
-    @grass1.y = HEIGHT - 40
-    @grass2.y = HEIGHT - 40
+    @grass1.y = HEIGHT - 30
+    @grass2.y = HEIGHT - 30
     @grass2.x += GRASS_WIDTH
 
     @state = 'running'
