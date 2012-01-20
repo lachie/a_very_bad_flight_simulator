@@ -491,6 +491,12 @@ class Logo extends GameState
     @logo = new Bitmap("images/logo.jpg")
     @stage.addChild @logo
 
+    @stage.clearEvents()
+    @stage.onClick = =>
+      console.log "onclick in logo"
+      @changeState @game
+
+
 
   handleKeyUp: (e) =>
     e.stopPropagation()
@@ -511,7 +517,18 @@ class Game extends GameState
 
   enter: ->
     super
+    @stage.clearEvents()
     @start_game()
+
+    @stage.onMouseDown = =>
+      switch @state
+        when 'running'
+          @player.fire('jump')
+        when 'dead'
+          @changeState @
+
+    @stage.onMouseUp = =>
+      @player.fire('unjump')
 
   fire: (event, args...) ->
     switch event
@@ -624,6 +641,12 @@ $ ->
   canvas.attr('height', HEIGHT)
 
   stage = new Stage(canvas[0])
+  stage.mouseEnabled = true
+
+  stage.clearEvents = ->
+    @onClick = null
+    @onMouseUp = null
+    @onMouseDown = null
 
   game = new Game(stage)
 
