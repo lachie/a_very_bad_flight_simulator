@@ -642,6 +642,7 @@ $ ->
 
   stage = new Stage(canvas[0])
   stage.mouseEnabled = true
+  Touch.enable(stage)
 
   stage.clearEvents = ->
     @onClick = null
