@@ -561,9 +561,15 @@
     }
 
     Logo.prototype.enter = function() {
+      var _this = this;
       Logo.__super__.enter.apply(this, arguments);
       this.logo = new Bitmap("images/logo.jpg");
-      return this.stage.addChild(this.logo);
+      this.stage.addChild(this.logo);
+      this.stage.clearEvents();
+      return this.stage.onClick = function() {
+        console.log("onclick in logo");
+        return _this.changeState(_this.game);
+      };
     };
 
     Logo.prototype.handleKeyUp = function(e) {
@@ -591,8 +597,21 @@
     }
 
     Game.prototype.enter = function() {
+      var _this = this;
       Game.__super__.enter.apply(this, arguments);
-      return this.start_game();
+      this.stage.clearEvents();
+      this.start_game();
+      this.stage.onMouseDown = function() {
+        switch (_this.state) {
+          case 'running':
+            return _this.player.fire('jump');
+          case 'dead':
+            return _this.changeState(_this);
+        }
+      };
+      return this.stage.onMouseUp = function() {
+        return _this.player.fire('unjump');
+      };
     };
 
     Game.prototype.fire = function() {
@@ -707,6 +726,13 @@
     canvas.attr('width', WIDTH);
     canvas.attr('height', HEIGHT);
     stage = new Stage(canvas[0]);
+    stage.mouseEnabled = true;
+    Touch.enable(stage);
+    stage.clearEvents = function() {
+      this.onClick = null;
+      this.onMouseUp = null;
+      return this.onMouseDown = null;
+    };
     game = new Game(stage);
     logo = new Logo(stage, game);
     logo.enter();
