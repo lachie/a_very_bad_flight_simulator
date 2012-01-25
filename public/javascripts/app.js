@@ -1,5 +1,5 @@
 (function() {
-  var BUILDING_DENSITY_FACTOR, Building, CEILING_LEVEL, Collider, FLOOR_LEVEL, FPS, GRASS_SPEED, GRASS_WIDTH, Game, GameState, Grass, Gravity, HEIGHT, INTERVAL, InitialLevelSpeed, JetpackThrust, KEYCODE_A, KEYCODE_D, KEYCODE_ESC, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Logo, Obstacle, PLAYER_X_OFFSET, Player, SKY_SPEED, SKY_WIDTH, Sector, Sky, Stats, WIDTH, Word, building_dimensions, count, frames, height, i, num, offset, randInt, sparklesFrameData, spriteData, width, widths, words;
+  var BUILDING_DENSITY_FACTOR, Building, CEILING_LEVEL, Collider, FLOOR_LEVEL, FPS, GRASS_SPEED, GRASS_WIDTH, Game, GameState, Grass, Gravity, HEIGHT, INTERVAL, InitialLevelSpeed, JetpackThrust, KEYCODE_A, KEYCODE_D, KEYCODE_ESC, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Logo, Obstacle, PLAYER_X_OFFSET, Player, SKY_SPEED, SKY_WIDTH, Sector, Sky, Stats, WIDTH, Word, building_dimensions, count, filetype, frames, height, i, num, offset, randInt, soundFiletype, sparklesFrameData, spriteData, width, widths, words;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -83,6 +83,22 @@
   randInt = __bind(function(lo, hi) {
     return Math.floor(Math.random() * (hi - lo)) + lo;
   }, this);
+  filetype = __bind(function() {
+    var agent;
+    agent = navigator.userAgent.toLowerCase();
+    if (agent.indexOf("chrome") > -1) {
+      return ".mp3";
+    } else if (agent.indexOf("opera") > -1) {
+      return ".ogg";
+    } else if (agent.indexOf("firefox") > -1) {
+      return ".ogg";
+    } else if (agent.indexOf("safari") > -1) {
+      return ".mp3";
+    } else if (agent.indexOf("msie") > -1) {
+      return ".mp3";
+    }
+  }, this);
+  soundFiletype = filetype();
   Player = (function() {
     __extends(Player, Container);
     function Player(game) {
@@ -110,7 +126,7 @@
     Player.prototype.addScore = function(score) {
       this.score += score;
       this.addSparkle();
-      return SoundJS.play("score");
+      return SoundJS.play("score", SoundJS.INTERRUPT_NONE, 0.2);
     };
     Player.prototype.makeAnim = function() {
       var player;
@@ -685,15 +701,15 @@
     SoundJS.addBatch([
       {
         name: "explosion",
-        src: "/sounds/exp2.mp3",
+        src: "/sounds/exp2" + soundFiletype,
         instances: 1
       }, {
         name: "rocket",
-        src: "/sounds/rocket.mp3",
+        src: "/sounds/rocket" + soundFiletype,
         instances: 1
       }, {
         name: "score",
-        src: "/sounds/score.mp3",
+        src: "/sounds/score" + soundFiletype,
         instances: 1
       }
     ]);

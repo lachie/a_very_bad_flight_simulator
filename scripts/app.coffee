@@ -92,6 +92,22 @@ sparklesFrameData =
 randInt = (lo, hi) =>
   Math.floor(Math.random() * (hi - lo)) + lo
 
+filetype = () =>
+  agent = navigator.userAgent.toLowerCase()
+  if(agent.indexOf("chrome") > -1)
+    return ".mp3"
+  else if(agent.indexOf("opera") > -1)
+    return ".ogg"
+  else if(agent.indexOf("firefox") > -1)
+    return ".ogg"
+  else if(agent.indexOf("safari") > -1)
+    return ".mp3"
+  else if(agent.indexOf("msie") > -1)
+    return ".mp3"
+
+
+soundFiletype = filetype()
+
 class Player extends Container
   constructor: (@game) ->
     Container.prototype.initialize.apply(@)
@@ -131,7 +147,7 @@ class Player extends Container
   addScore: (score) ->
     @score += score
     @addSparkle()
-    SoundJS.play "score"
+    SoundJS.play "score", SoundJS.INTERRUPT_NONE, 0.2
 
 
   makeAnim: ->
@@ -697,9 +713,9 @@ class Game extends GameState
 $ ->
 
   SoundJS.addBatch([
-    {name:"explosion", src:"/sounds/exp2.mp3", instances:1},
-    {name:"rocket", src:"/sounds/rocket.mp3", instances:1},
-    {name:"score", src:"/sounds/score.mp3", instances:1}
+    {name:"explosion", src:"/sounds/exp2" + soundFiletype, instances:1},
+    {name:"rocket", src:"/sounds/rocket" + soundFiletype, instances:1},
+    {name:"score", src:"/sounds/score" + soundFiletype, instances:1}
     ])
 
   Ticker.setInterval INTERVAL
