@@ -1,13 +1,13 @@
 (function() {
-  var BUILDING_DENSITY_FACTOR, CEILING_LEVEL, Collider, FLOOR_LEVEL, FPS, GRASS_SPEED, GRASS_WIDTH, Game, GameState, Grass, Gravity, HEIGHT, INTERVAL, InitialLevelSpeed, JetpackThrust, KEYCODE_A, KEYCODE_D, KEYCODE_ESC, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Logo, Obstacle, PLAYER_X_OFFSET, Player, SKY_SPEED, SKY_WIDTH, Sector, Sky, Stats, WIDTH, Word, building_dimensions, count, frames, height, i, num, offset, sparklesFrameData, spriteData, width, widths, words;
-  var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+  var BUILDING_DENSITY_FACTOR, Building, CEILING_LEVEL, Collider, FLOOR_LEVEL, FPS, GRASS_SPEED, GRASS_WIDTH, Game, GameState, Grass, Gravity, HEIGHT, INTERVAL, InitialLevelSpeed, JetpackThrust, KEYCODE_A, KEYCODE_D, KEYCODE_ESC, KEYCODE_LEFT, KEYCODE_RIGHT, KEYCODE_SPACE, KEYCODE_UP, KEYCODE_W, Logo, Obstacle, PLAYER_X_OFFSET, Player, SKY_SPEED, SKY_WIDTH, Sector, Sky, Stats, WIDTH, Word, building_dimensions, count, frames, height, i, num, offset, randInt, sparklesFrameData, spriteData, width, widths, words;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
     ctor.prototype = parent.prototype;
     child.prototype = new ctor;
     child.__super__ = parent.prototype;
     return child;
-  }, __slice = Array.prototype.slice, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  }, __slice = Array.prototype.slice;
   FPS = 60;
   INTERVAL = 1 / FPS * 1000;
   WIDTH = 600;
@@ -80,6 +80,9 @@
       regY: 11
     }
   };
+  randInt = __bind(function(lo, hi) {
+    return Math.floor(Math.random() * (hi - lo)) + lo;
+  }, this);
   Player = (function() {
     __extends(Player, Container);
     function Player(game) {
@@ -106,7 +109,8 @@
     };
     Player.prototype.addScore = function(score) {
       this.score += score;
-      return this.addSparkle();
+      this.addSparkle();
+      return SoundJS.play("score");
     };
     Player.prototype.makeAnim = function() {
       var player;
@@ -181,7 +185,8 @@
     Player.prototype.die = function() {
       this.state = 'dying';
       this.game.fire('dying');
-      return this.anim.gotoAndPlay('splat');
+      this.anim.gotoAndPlay('splat');
+      return SoundJS.play("explosion");
     };
     Player.prototype.finishedDying = function() {
       return this.game.fire('dead');
@@ -193,6 +198,7 @@
         case 'jump':
           accel = JetpackThrust;
           this.flame.visible = true;
+          SoundJS.play("rocket", SoundJS.INTERRUPT_NONE, 0.2);
           break;
         case 'die':
         case 'dying':
@@ -284,6 +290,68 @@
       Bitmap.prototype.initialize.apply(this);
     }
     return Grass;
+  })();
+  Building = (function() {
+    __extends(Building, Shape);
+    function Building(x) {
+      this.x = x;
+      Shape.prototype.initialize.apply(this);
+      this.structure();
+      this.scaffolding();
+      this.windows();
+    }
+    Building.prototype.structure = function() {
+      this.floor_height = randInt(16, 22);
+      this.column_width = randInt(14, 22);
+      this.columns = randInt(4, 8);
+      this.floors = randInt(4, 15);
+      console.log("structure " + this.floors + " " + this.columns);
+      this.gap = 6;
+      this.height = (this.floor_height + this.gap) * this.floors;
+      this.width = (this.column_width + this.gap) * this.columns;
+      return this.y = HEIGHT - this.height;
+    };
+    Building.prototype.windows = function() {
+      var c, f, x, y, _ref, _ref2;
+      this.graphics.setStrokeStyle(1);
+      this.graphics.beginStroke(Graphics.getRGB(50, 50, 50));
+      for (c = 0, _ref = this.columns; 0 <= _ref ? c < _ref : c > _ref; 0 <= _ref ? c++ : c--) {
+        for (f = 0, _ref2 = this.floors; 0 <= _ref2 ? f < _ref2 : f > _ref2; 0 <= _ref2 ? f++ : f--) {
+          x = this.gap / 2 + (c * (this.column_width + this.gap));
+          y = (HEIGHT - (this.gap / 2) - this.floor_height) - (f * (this.floor_height + this.gap));
+          console.log("floor y " + y);
+          this.graphics.beginFill(this.window_colour());
+          this.graphics.drawRoundRect(x, y, this.column_width, this.floor_height, 2);
+          this.graphics.endFill();
+        }
+      }
+      return this.graphics.endStroke();
+    };
+    Building.prototype.window_colour = function() {
+      return Graphics.getHSL(randInt(170, 220), randInt(60, 70), randInt(70, 80));
+    };
+    Building.prototype.scaffolding = function() {
+      this.graphics.setStrokeStyle(2);
+      this.graphics.beginStroke(Graphics.getRGB(20, 20, 20));
+      this.graphics.beginFill(Graphics.getHSL(randInt(0, 360), 20, randInt(20, 50)));
+      this.graphics.drawRect(0, HEIGHT - this.height, this.width, this.height);
+      this.graphics.endFill();
+      return this.graphics.endStroke();
+    };
+    Building.prototype.contains = function(t) {
+      var x, y, _ref;
+      _ref = t.localToLocal(0, 0, this), x = _ref.x, y = _ref.y;
+      return x + t.width > 0 && y + t.height > 0;
+    };
+    Building.prototype.is_collidable = function(p) {
+      var x, y, _ref;
+      _ref = p.localToLocal(0, 0, this), x = _ref.x, y = _ref.y;
+      return x < this.width;
+    };
+    Building.prototype.hit = function(player) {
+      return player.die();
+    };
+    return Building;
   })();
   Obstacle = (function() {
     __extends(Obstacle, Bitmap);
@@ -377,24 +445,28 @@
       return this.next_building_time -= 1;
     };
     Sector.prototype.obstacle = function() {
-      var bitmap, image, x, y, _ref;
+      var image, obstacle, x, y, _ref;
       image = Math.floor(Math.random() * building_dimensions.length);
       _ref = building_dimensions[image], width = _ref[0], height = _ref[1];
       x = -this.x + WIDTH;
       y = HEIGHT - height;
-      bitmap = new Obstacle("images/buildings/00" + image + ".jpg", x, y, width, height);
-      this.addChild(bitmap);
-      this.next_building_time = bitmap.width + Math.random() * this.next_building_jitter;
+      obstacle = new Obstacle("images/buildings/00" + image + ".jpg", x, y, width, height);
+      this.addChild(obstacle);
+      this.next_building_time = obstacle.width + Math.random() * this.next_building_jitter;
+      this.addChild(obstacle);
+      this.next_building_time = obstacle.width + Math.random() * this.next_building_jitter;
       this.next_building_jitter -= 2.0;
       if (this.next_building_jitter < 30) {
         this.next_building_jitter = 30;
       }
-      return this.word(bitmap);
+      return this.word(obstacle);
     };
     Sector.prototype.word = function(obstacle) {
       var text, word, x_pos;
       text = words[Math.floor(Math.random() * words.length)];
       x_pos = obstacle.x + (obstacle.width / 2 - 25);
+      console.log("obstacle.y " + obstacle.y);
+      console.log("obstacle.height " + obstacle.height);
       word = new Word(text, x_pos, obstacle.y);
       return this.addChild(word);
     };
@@ -610,6 +682,21 @@
   })();
   $(function() {
     var canvas, game, logo, stage;
+    SoundJS.addBatch([
+      {
+        name: "explosion",
+        src: "/sounds/exp2.mp3",
+        instances: 1
+      }, {
+        name: "rocket",
+        src: "/sounds/rocket.mp3",
+        instances: 1
+      }, {
+        name: "score",
+        src: "/sounds/score.mp3",
+        instances: 1
+      }
+    ]);
     Ticker.setInterval(INTERVAL);
     canvas = $('#testCanvas');
     canvas.attr('width', WIDTH);

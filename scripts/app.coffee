@@ -89,6 +89,9 @@ sparklesFrameData =
   frames: {width:21,height:23,regX:10,regY:11}
 
 
+randInt = (lo, hi) =>
+  Math.floor(Math.random() * (hi - lo)) + lo
+
 class Player extends Container
   constructor: (@game) ->
     Container.prototype.initialize.apply(@)
@@ -128,6 +131,7 @@ class Player extends Container
   addScore: (score) ->
     @score += score
     @addSparkle()
+    SoundJS.play "score"
 
 
   makeAnim: ->
@@ -162,13 +166,13 @@ class Player extends Container
     g.clear()
     g.beginFill("#FF0000")
 
-    g.moveTo(2, 0);   # ship
-    g.lineTo(4, -3);  # rpoint
-    g.lineTo(2, -2);  # rnotch
-    g.lineTo(0, -5);  # tip
-    g.lineTo(-2, -2); # lnotch
-    g.lineTo(-4, -3); # lpoint
-    g.lineTo(-2, -0); # ship
+    g.moveTo(2, 0)   # ship
+    g.lineTo(4, -3)  # rpoint
+    g.lineTo(2, -2)  # rnotch
+    g.lineTo(0, -5)  # tip
+    g.lineTo(-2, -2) # lnotch
+    g.lineTo(-4, -3) # lpoint
+    g.lineTo(-2, -0) # ship
 
 
   makeSparkles: ->
@@ -216,8 +220,9 @@ class Player extends Container
 
   die: ->
     @state = 'dying'
-    @game.fire('dying')
+    @game.fire 'dying'
     @anim.gotoAndPlay 'splat'
+    SoundJS.play "explosion"
 
 
   finishedDying: ->
@@ -231,6 +236,7 @@ class Player extends Container
       when 'jump'
         accel = JetpackThrust
         @flame.visible = true
+        SoundJS.play "rocket", SoundJS.INTERRUPT_NONE, 0.2
       when 'die', 'dying'
         accel = Gravity / 2
         #@v = 0
@@ -322,12 +328,66 @@ class Stats
 
 class Sky extends Bitmap
   constructor: () ->
-    Bitmap.prototype.initialize.apply(@)
+    Bitmap.prototype.initialize.apply @
 
 
 class Grass extends Bitmap
   constructor: () ->
-    Bitmap.prototype.initialize.apply(@)
+    Bitmap.prototype.initialize.apply @
+
+
+class Building extends Shape
+  constructor: (@x)->
+    Shape.prototype.initialize.apply @
+    @structure()
+    @scaffolding()
+    @windows()
+
+  structure: ->
+    @floor_height = randInt(16, 22)
+    @column_width = randInt(14, 22)
+    @columns = randInt(4, 8)
+    @floors = randInt(4, 15)
+    console.log "structure #{@floors} #{@columns}"
+    @gap = 6
+    @height = (@floor_height + @gap) * @floors
+    @width = (@column_width + @gap) * @columns
+    @y = HEIGHT - @height
+
+  windows: ->
+    @graphics.setStrokeStyle(1)
+    @graphics.beginStroke(Graphics.getRGB(50,50,50))
+    for c in [0...@columns]
+      for f in [0...@floors]
+        x = @gap / 2 + (c * (@column_width + @gap))
+        y = (HEIGHT - (@gap / 2) - @floor_height) - (f * (@floor_height + @gap))
+        console.log "floor y #{y}"
+        @graphics.beginFill @window_colour()
+        @graphics.drawRoundRect x, y, @column_width, @floor_height, 2
+        @graphics.endFill()
+    @graphics.endStroke()
+
+  window_colour: ->
+    Graphics.getHSL(randInt(170, 220), randInt(60, 70), randInt(70, 80))
+
+  scaffolding: ->
+    @graphics.setStrokeStyle(2)
+    @graphics.beginStroke(Graphics.getRGB(20,20,20))
+    @graphics.beginFill(Graphics.getHSL(randInt(0, 360), 20, randInt(20, 50)))
+    @graphics.drawRect(0,HEIGHT - @height ,@width, @height)
+    @graphics.endFill()
+    @graphics.endStroke()
+
+  contains: (t) ->
+    {x: x, y: y} = t.localToLocal(0,0,@)
+    x + t.width > 0 && y + t.height > 0
+
+  is_collidable: (p) ->
+    {x: x, y: y} = p.localToLocal(0,0,@)
+    x < @width
+
+  hit: (player) ->
+    player.die()
 
 
 class Obstacle extends Bitmap
@@ -355,21 +415,17 @@ class Word extends Text
     @height = @getMeasuredLineHeight()
     @y -= @height
 
-
   tick: ->
     if @wasHit
       @color = '#400'
-
 
   contains: (t) ->
     {x: x, y: y} = t.localToLocal(0,0,@)
     x + t.width > 0 && y + t.height > -@height && y < @height
 
-
   hit: (player) ->
     player.addScore(100)
     @wasHit = true
-
 
 
 InitialLevelSpeed = 2.5
@@ -413,17 +469,23 @@ class Sector extends Container
     x = -@x + WIDTH
     y = HEIGHT - height
 
-    bitmap = new Obstacle("images/buildings/00#{image}.jpg", x, y, width, height)
-    @addChild bitmap
-    @next_building_time = bitmap.width + Math.random() * @next_building_jitter
+    obstacle = new Obstacle("images/buildings/00" + image + ".jpg", x, y, width, height)
+    this.addChild(obstacle)
+    this.next_building_time = obstacle.width + Math.random() * this.next_building_jitter
+
+    #building = new Building x, y
+    @addChild obstacle
+    @next_building_time = obstacle.width + Math.random() * @next_building_jitter
     @next_building_jitter -= 2.0
     @next_building_jitter = 30 if @next_building_jitter < 30
-    @word bitmap
+    @word obstacle
 
 
   word: (obstacle) ->
     text = words[Math.floor(Math.random() * words.length)]
     x_pos = obstacle.x + (obstacle.width/2 - 25)
+    console.log "obstacle.y #{obstacle.y}"
+    console.log "obstacle.height #{obstacle.height}"
     word = new Word(text, x_pos, obstacle.y)
     @addChild word
 
@@ -633,6 +695,12 @@ class Game extends GameState
     @grass2.x += GRASS_WIDTH * 2 if @grass2.x < -GRASS_WIDTH
 
 $ ->
+
+  SoundJS.addBatch([
+    {name:"explosion", src:"/sounds/exp2.mp3", instances:1},
+    {name:"rocket", src:"/sounds/rocket.mp3", instances:1},
+    {name:"score", src:"/sounds/score.mp3", instances:1}
+    ])
 
   Ticker.setInterval INTERVAL
 
