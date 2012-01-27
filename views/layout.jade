@@ -4,10 +4,8 @@ html
     title= title
     link(rel='stylesheet', href='/stylesheets/style.css')
     link(rel="icon", type="image/png", href="/favicon.png")
-    script(src='javascripts/vendor/easel.js')
-    script(src='javascripts/vendor/jquery.js')
-    script(src='javascripts/vendor/underscore.js')
+    script(src='javascripts/require.js', data-main='javascripts/main.js')
     script(src='javascripts/app.js')
     :coffeescript
-      console.log "hello"  
+      console.log "hello"
   body!= body
